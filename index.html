@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>บันทึกรายรับรายจ่าย</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* Ledger / bank-passbook palette */
+    --ink:#173832;          /* deep ledger-cover green, used for nav/headers */
+    --ink-light:#204b42;
+    --paper:#FBF7EC;        /* warm ledger paper */
+    --card:#FFFEFA;
+    --gold:#B08B2E;         /* brass foil accent */
+    --gold-light:#E8D9AE;
+    --line:#E3DBC6;         /* ruled paper line */
+    --income:#3E7A56;
+    --income-bg:#E7F1E9;
+    --expense:#A24B37;
+    --expense-bg:#F6E7E2;
+    --danger:#A63A2C;
+    --text:#22302B;
+    --muted:#7C8880;
+    --border:#E6E0D2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:'IBM Plex Sans Thai', -apple-system, sans-serif;
+    background:var(--paper); color:var(--text); min-height:100vh;
+    -webkit-tap-highlight-color:transparent;
+    letter-spacing:.1px;
+  }
+  #app{max-width:480px; margin:0 auto; min-height:100vh; background:var(--paper); display:flex; flex-direction:column; position:relative;}
+  .screen{display:none; flex:1; flex-direction:column; padding:18px; padding-bottom:96px;}
+  .screen.active{display:flex;}
+  h1,h2,h3{font-weight:700; color:var(--ink); font-family:'IBM Plex Sans Thai',sans-serif;}
+  .numeral{font-family:'Fraunces',serif; font-variant-numeric:tabular-nums;}
+  .topbar{display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;}
+  .topbar h2{font-size:19px; letter-spacing:.2px;}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:6px;
+    padding:13px 16px; border:none; border-radius:10px; font-size:15px; font-weight:600;
+    cursor:pointer; background:var(--ink); color:#fff; transition:background .15s, transform .1s;
+    font-family:'IBM Plex Sans Thai',sans-serif;
+  }
+  .btn:active{background:var(--ink-light); transform:scale(.98);}
+  .btn.secondary{background:#fff; color:var(--ink); border:1.5px solid var(--border);}
+  .btn.danger{background:var(--danger); color:#fff;}
+  .btn.block{width:100%;}
+  .btn.ghost{background:transparent; color:var(--ink); padding:8px;}
+  input, select, textarea{
+    width:100%; padding:12px 14px; border:1.5px solid var(--border); border-radius:10px;
+    font-size:15px; background:#fff; color:var(--text); font-family:'IBM Plex Sans Thai',sans-serif;
+  }
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--gold);}
+  label{font-size:12.5px; color:var(--muted); font-weight:600; display:block; margin-bottom:6px; letter-spacing:.2px;}
+  .field{margin-bottom:14px;}
+  .card{background:var(--card); border:1px solid var(--border); border-radius:14px; padding:16px; margin-bottom:12px; box-shadow:0 1px 2px rgba(23,56,50,.05);}
+  .summary-row{display:flex; gap:10px; margin-bottom:14px;}
+  .summary-card{flex:1; border-radius:14px; padding:14px; border:1px solid var(--border); background:var(--card);}
+  .summary-card .label{font-size:12px; color:var(--muted); display:flex; align-items:center; gap:5px;}
+  .summary-card .amount{font-family:'Fraunces',serif; font-size:19px; font-weight:600; margin-top:5px;}
+  .summary-card.income .amount{color:var(--income);}
+  .summary-card.expense .amount{color:var(--expense);}
+  .summary-dot{width:7px; height:7px; border-radius:50%; display:inline-block;}
+  .summary-card.income .summary-dot{background:var(--income);}
+  .summary-card.expense .summary-dot{background:var(--expense);}
+
+  /* Ledger-style balance card: passbook page with brass rule + ruled lines */
+  .balance-card{
+    position:relative; background:var(--ink); color:#F5EFDD; border-radius:16px;
+    padding:22px 20px 20px; margin-bottom:16px; overflow:hidden;
+    background-image:
+      linear-gradient(var(--ink),var(--ink)),
+      repeating-linear-gradient(transparent, transparent 27px, rgba(245,239,221,.06) 28px);
+  }
+  .balance-card::before{
+    content:""; position:absolute; left:0; top:0; bottom:0; width:5px; background:var(--gold);
+  }
+  .balance-card .label{font-size:12px; letter-spacing:.6px; color:var(--gold-light); text-transform:uppercase;}
+  .balance-card .amount{font-family:'Fraunces',serif; font-size:34px; font-weight:600; margin-top:6px;}
+  .balance-card .caption{font-size:11.5px; color:rgba(245,239,221,.6); margin-top:8px;}
+
+  .tx-item{display:flex; align-items:center; justify-content:space-between; padding:13px 0; border-bottom:1px dashed var(--line);}
+  .tx-item:last-child{border-bottom:none;}
+  .tx-left{display:flex; align-items:center; gap:11px;}
+  .tx-icon{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0;}
+  .tx-icon.income{background:var(--income-bg); color:var(--income);}
+  .tx-icon.expense{background:var(--expense-bg); color:var(--expense);}
+  .tx-info .cat{font-weight:600; font-size:14px; color:var(--text);}
+  .tx-info .note{font-size:12px; color:var(--muted); margin-top:1px;}
+  .tx-amt{font-family:'Fraunces',serif; font-weight:600; font-size:15.5px; white-space:nowrap;}
+  .tx-amt.income{color:var(--income);}
+  .tx-amt.expense{color:var(--expense);}
+  .empty-state{text-align:center; padding:36px 20px; color:var(--muted);}
+  .empty-state .emoji{font-size:38px; margin-bottom:10px;}
+
+  /* Onboarding hint pointing at the FAB */
+  .onboard-tip{
+    display:flex; align-items:flex-start; gap:12px; background:var(--gold-light); border:1px solid var(--gold);
+    border-radius:14px; padding:14px 16px; margin-bottom:16px;
+  }
+  .onboard-tip .icon{font-size:22px; flex-shrink:0;}
+  .onboard-tip .txt{font-size:13.5px; color:#5B4A17; line-height:1.5;}
+  .onboard-tip .txt b{color:var(--ink);}
+  .onboard-arrow{
+    position:fixed; bottom:150px; right:34px; font-size:34px; color:var(--gold);
+    animation:bounceArrow 1.4s infinite; z-index:52; transform:rotate(20deg); pointer-events:none;
+  }
+  @media (max-width:480px){ .onboard-arrow{right:30px;} }
+  @keyframes bounceArrow{0%,100%{transform:translateY(0) rotate(20deg);}50%{transform:translateY(8px) rotate(20deg);}}
+
+  .bottomnav{
+    position:fixed; bottom:0; left:0; right:0; max-width:480px; margin:0 auto;
+    background:var(--ink); display:flex; z-index:50;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .navbtn{flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:11px 0; background:none; border:none; color:rgba(245,239,221,.55); font-size:11px; cursor:pointer; font-family:'IBM Plex Sans Thai',sans-serif;}
+  .navbtn.active{color:var(--gold-light);}
+  .navbtn .icon{font-size:19px;}
+  .fab{
+    position:fixed; bottom:76px; right:calc(50% - 240px + 20px); width:58px; height:58px; border-radius:50%;
+    background:var(--gold); color:var(--ink); font-size:28px; font-weight:700; border:none; box-shadow:0 6px 16px rgba(176,139,46,.45);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:51;
+  }
+  @media (max-width:480px){ .fab{right:20px;} }
+  .type-toggle{display:flex; background:#EFE9D8; border-radius:10px; padding:4px; margin-bottom:16px;}
+  .type-toggle button{flex:1; padding:10px; border:none; background:none; border-radius:8px; font-weight:600; cursor:pointer; color:var(--muted); font-family:'IBM Plex Sans Thai',sans-serif;}
+  .type-toggle button.active.income{background:var(--income); color:#fff;}
+  .type-toggle button.active.expense{background:var(--expense); color:#fff;}
+  .cat-chip{display:inline-block; padding:8px 14px; border-radius:20px; border:1.5px solid var(--border); margin:4px 4px 4px 0; cursor:pointer; font-size:14px; background:#fff;}
+  .cat-chip.selected{background:var(--ink); color:#fff; border-color:var(--ink);}
+  .pin-dots{display:flex; gap:14px; justify-content:center; margin:20px 0;}
+  .pin-dot{width:15px; height:15px; border-radius:50%; border:2px solid var(--gold); background:transparent;}
+  .pin-dot.filled{background:var(--gold);}
+  .keypad{display:grid; grid-template-columns:repeat(3,1fr); gap:12px; max-width:280px; margin:0 auto;}
+  .keypad button{padding:18px; font-size:21px; border:none; background:#fff; border:1px solid var(--border); border-radius:14px; cursor:pointer; font-family:'Fraunces',serif; color:var(--ink);}
+  .keypad button:active{background:#f1ece0;}
+  .center-screen{display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; padding:20px; text-align:center;}
+  .logo{font-size:46px; margin-bottom:6px;}
+  .brand-title{font-family:'Fraunces',serif; font-size:26px; font-weight:600; color:var(--ink); margin-bottom:4px;}
+  .profile-list{width:100%; max-width:360px;}
+  .profile-item{display:flex; align-items:center; gap:12px; padding:14px; background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:10px; cursor:pointer;}
+  .profile-avatar{width:44px; height:44px; border-radius:50%; background:var(--ink); color:var(--gold-light); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:17px; font-family:'Fraunces',serif;}
+  .profile-name{font-weight:600; text-align:left;}
+  .profile-del{margin-left:auto; color:var(--danger); background:none; border:none; font-size:18px; cursor:pointer; padding:6px;}
+  .chart-wrap{display:flex; justify-content:center; margin:10px 0 16px;}
+  .legend{display:flex; flex-direction:column; gap:8px;}
+  .legend-item{display:flex; align-items:center; gap:8px; font-size:13px;}
+  .legend-swatch{width:12px; height:12px; border-radius:3px; flex-shrink:0;}
+  .toast{
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%); background:var(--ink); color:#F5EFDD;
+    padding:10px 18px; border-radius:20px; font-size:13px; z-index:100; opacity:0; transition:opacity .3s; pointer-events:none;
+  }
+  .toast.show{opacity:1;}
+  .modal-overlay{position:fixed; inset:0; background:rgba(23,56,50,.45); display:none; align-items:flex-end; z-index:60; max-width:480px; margin:0 auto;}
+  .modal-overlay.active{display:flex;}
+  .modal-sheet{background:#fff; width:100%; border-radius:20px 20px 0 0; padding:20px; max-height:85vh; overflow-y:auto;}
+  .modal-sheet h3{margin-bottom:14px;}
+  .row-gap{display:flex; gap:10px;}
+  .month-nav{display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;}
+  .month-nav button{background:none; border:none; font-size:18px; padding:6px 12px; cursor:pointer; color:var(--ink);}
+  .month-nav strong{font-family:'Fraunces',serif; font-weight:600;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- SCREEN: Profile Select -->
+  <div class="screen active" id="screen-profiles">
+    <div class="center-screen">
+      <div class="logo">📔</div>
+      <div class="brand-title">สมุดบัญชีของฉัน</div>
+      <p style="color:var(--muted); margin-bottom:26px; font-size:14px;">เลือกโปรไฟล์ของคุณ — ข้อมูลแต่ละคนแยกเก็บกันในเครื่องนี้</p>
+      <div class="profile-list" id="profileList"></div>
+      <button class="btn block" style="max-width:360px;" onclick="showCreateProfile()">+ สร้างโปรไฟล์ใหม่</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Create Profile -->
+  <div class="screen" id="screen-createprofile">
+    <div class="center-screen">
+      <h2 style="margin-bottom:20px;">สร้างโปรไฟล์ใหม่</h2>
+      <div class="field" style="width:100%; max-width:320px;">
+        <label>ชื่อของคุณ</label>
+        <input type="text" id="newProfileName" placeholder="เช่น สมชาย">
+      </div>
+      <div class="field" style="width:100%; max-width:320px;">
+        <label>ตั้งรหัส PIN 4 หลัก</label>
+        <input type="password" id="newProfilePin" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <div class="row-gap" style="width:100%; max-width:320px;">
+        <button class="btn secondary block" onclick="showScreen('screen-profiles')">ยกเลิก</button>
+        <button class="btn block" onclick="createProfile()">สร้าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: PIN Unlock -->
+  <div class="screen" id="screen-pin">
+    <div class="center-screen">
+      <div class="profile-avatar" style="width:64px; height:64px; font-size:26px; margin-bottom:14px;" id="pinAvatar"></div>
+      <h2 id="pinProfileName" style="margin-bottom:6px;"></h2>
+      <p style="color:var(--muted); font-size:13px; margin-bottom:10px;">ใส่รหัส PIN</p>
+      <div class="pin-dots" id="pinDots">
+        <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+      </div>
+      <div class="keypad" id="pinKeypad"></div>
+      <button class="btn ghost" style="margin-top:16px;" onclick="showScreen('screen-profiles')">← เปลี่ยนโปรไฟล์</button>
+    </div>
+  </div>
+
+  <!-- SCREEN: Dashboard -->
+  <div class="screen" id="screen-dashboard">
+    <div class="topbar">
+      <div>
+        <div style="font-size:13px; color:var(--muted);" id="greetName"></div>
+        <h2>หน้าหลัก</h2>
+      </div>
+      <button class="btn ghost" onclick="logout()" style="font-size:20px;">👤</button>
+    </div>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <strong id="monthLabel"></strong>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="balance-card">
+      <div class="label">ยอดคงเหลือเดือนนี้</div>
+      <div class="amount numeral" id="balanceAmt">฿0.00</div>
+      <div class="caption">คำนวณให้อัตโนมัติจากรายการที่คุณบันทึก ไม่ต้องกรอกเอง</div>
+    </div>
+    <div class="summary-row">
+      <div class="summary-card income">
+        <div class="label"><span class="summary-dot"></span>รายรับ</div>
+        <div class="amount numeral" id="incomeAmt">฿0</div>
+      </div>
+      <div class="summary-card expense">
+        <div class="label"><span class="summary-dot"></span>รายจ่าย</div>
+        <div class="amount numeral" id="expenseAmt">฿0</div>
+      </div>
+    </div>
+    <div class="onboard-tip" id="onboardTip" style="display:none;">
+      <div class="icon">👉</div>
+      <div class="txt">ยังไม่มีรายการเลย เริ่มต้นได้โดยกดปุ่ม <b>วงกลมสีทอง “+” มุมล่างขวา</b> เพื่อบันทึกรายรับหรือรายจ่ายรายการแรกของคุณ</div>
+    </div>
+    <div class="card">
+      <div class="topbar" style="margin-bottom:8px;">
+        <h3 style="font-size:15px;">รายการล่าสุด</h3>
+        <a href="#" style="font-size:13px; color:var(--ink); font-weight:600; text-decoration:none;" onclick="showScreen('screen-list'); return false;">ดูทั้งหมด</a>
+      </div>
+      <div id="recentList"></div>
+    </div>
+  </div>
+
+  <div class="onboard-arrow" id="onboardArrow" style="display:none;">↘</div>
+
+  <!-- SCREEN: Transaction List -->
+  <div class="screen" id="screen-list">
+    <div class="topbar"><h2>รายการทั้งหมด</h2></div>
+    <div class="field">
+      <select id="filterType" onchange="renderList()">
+        <option value="ALL">ทั้งหมด</option>
+        <option value="INCOME">รายรับ</option>
+        <option value="EXPENSE">รายจ่าย</option>
+      </select>
+    </div>
+    <div class="card" id="fullList"></div>
+  </div>
+
+  <!-- SCREEN: Add/Edit Transaction -->
+  <div class="screen" id="screen-form">
+    <div class="topbar">
+      <button class="btn ghost" onclick="showScreen(prevFormScreen)">← ย้อนกลับ</button>
+      <h2 id="formTitle" style="font-size:17px;">เพิ่มรายการ</h2>
+      <div style="width:60px;"></div>
+    </div>
+    <div class="type-toggle">
+      <button id="toggleExpense" class="active expense" onclick="setFormType('EXPENSE')">รายจ่าย</button>
+      <button id="toggleIncome" class="income" onclick="setFormType('INCOME')">รายรับ</button>
+    </div>
+    <div class="field">
+      <label>จำนวนเงิน (บาท)</label>
+      <input type="number" id="formAmount" inputmode="decimal" placeholder="0.00">
+    </div>
+    <div class="field">
+      <label>หมวดหมู่</label>
+      <div id="formCategories"></div>
+    </div>
+    <div class="field">
+      <label>วันที่</label>
+      <input type="date" id="formDate">
+    </div>
+    <div class="field">
+      <label>โน้ต (ไม่บังคับ)</label>
+      <textarea id="formNote" rows="2" placeholder="รายละเอียดเพิ่มเติม"></textarea>
+    </div>
+    <button class="btn block" onclick="saveTransaction()">บันทึก</button>
+    <button class="btn danger block" style="margin-top:10px; display:none;" id="deleteBtn" onclick="deleteTransaction()">ลบรายการนี้</button>
+  </div>
+
+  <!-- SCREEN: Chart -->
+  <div class="screen" id="screen-chart">
+    <div class="topbar"><h2>สรุปภาพรวม</h2></div>
+    <div class="month-nav">
+      <button onclick="changeMonth(-1)">‹</button>
+      <strong id="monthLabel2"></strong>
+      <button onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="card">
+      <h3 style="font-size:15px; margin-bottom:6px;">สัดส่วนรายจ่ายตามหมวดหมู่</h3>
+      <div class="chart-wrap"><canvas id="pieCanvas" width="220" height="220"></canvas></div>
+      <div class="legend" id="pieLegend"></div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Settings -->
+  <div class="screen" id="screen-settings">
+    <div class="topbar"><h2>ตั้งค่า</h2></div>
+    <div class="card">
+      <div style="font-weight:600; margin-bottom:2px;" id="settingsName"></div>
+      <div style="font-size:13px; color:var(--muted);">โปรไฟล์ปัจจุบัน</div>
+    </div>
+    <button class="btn secondary block" style="margin-bottom:10px;" onclick="exportCSV()">📄 ส่งออกข้อมูลเป็น CSV</button>
+    <button class="btn secondary block" style="margin-bottom:6px;" onclick="exportJSON()">💾 สำรองข้อมูล (JSON)</button>
+    <button class="btn secondary block" style="margin-bottom:6px;" onclick="triggerImportJSON()">📥 กู้คืนข้อมูลจากไฟล์สำรอง</button>
+    <p style="font-size:12px; color:var(--muted); margin:0 0 10px; line-height:1.5;">แนะนำให้กด "สำรองข้อมูล" เก็บไฟล์ไว้เป็นระยะ โดยเฉพาะถ้าใช้ผ่าน Safari เพราะบางครั้งเบราว์เซอร์อาจล้างข้อมูลของเว็บที่ไม่ได้เปิดนานๆ</p>
+    <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="handleImportFile(event)">
+    <button class="btn secondary block" style="margin-bottom:10px;" onclick="showChangePin()">🔒 เปลี่ยนรหัส PIN</button>
+    <button class="btn secondary block" style="margin-bottom:10px;" onclick="manageCategories()">🏷️ จัดการหมวดหมู่</button>
+    <button class="btn danger block" style="margin-bottom:10px;" onclick="confirmClearData()">🗑️ ล้างข้อมูลทั้งหมด</button>
+    <button class="btn secondary block" onclick="logout()">👤 เปลี่ยนโปรไฟล์ / ออกจากระบบ</button>
+  </div>
+
+  <div class="bottomnav" id="bottomnav" style="display:none;">
+    <button class="navbtn active" data-screen="screen-dashboard" onclick="navTo('screen-dashboard')"><span class="icon">🏠</span>หน้าหลัก</button>
+    <button class="navbtn" data-screen="screen-list" onclick="navTo('screen-list')"><span class="icon">📋</span>รายการ</button>
+    <button class="navbtn" data-screen="screen-chart" onclick="navTo('screen-chart')"><span class="icon">📊</span>กราฟ</button>
+    <button class="navbtn" data-screen="screen-settings" onclick="navTo('screen-settings')"><span class="icon">⚙️</span>ตั้งค่า</button>
+  </div>
+  <button class="fab" id="fabBtn" style="display:none;" onclick="openAddForm()">+</button>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Modal: manage categories -->
+  <div class="modal-overlay" id="catModal">
+    <div class="modal-sheet">
+      <h3>จัดการหมวดหมู่</h3>
+      <div class="type-toggle">
+        <button id="catToggleExpense" class="active expense" onclick="setCatModalType('EXPENSE')">รายจ่าย</button>
+        <button id="catToggleIncome" class="income" onclick="setCatModalType('INCOME')">รายรับ</button>
+      </div>
+      <div class="row-gap" style="margin-bottom:14px;">
+        <input type="text" id="newCatInput" placeholder="ชื่อหมวดหมู่ใหม่">
+        <button class="btn" onclick="addCategory()">เพิ่ม</button>
+      </div>
+      <div id="catManageList"></div>
+      <button class="btn secondary block" style="margin-top:14px;" onclick="closeCatModal()">ปิด</button>
+    </div>
+  </div>
+
+  <!-- Modal: change pin -->
+  <div class="modal-overlay" id="pinModal">
+    <div class="modal-sheet">
+      <h3>เปลี่ยนรหัส PIN</h3>
+      <div class="field">
+        <label>รหัส PIN ใหม่ (4 หลัก)</label>
+        <input type="password" id="newPinInput" inputmode="numeric" maxlength="4" placeholder="••••">
+      </div>
+      <div class="row-gap">
+        <button class="btn secondary block" onclick="closePinModal()">ยกเลิก</button>
+        <button class="btn block" onclick="saveNewPin()">บันทึก</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+/* ============================================================
+   STORAGE MODEL
+   localStorage key "expapp_profiles" -> [{id,name,pin}]
+   per profile: "expapp_data_<id>" -> {transactions:[], categories:[]}
+   ============================================================ */
+const DEFAULT_CATS = {
+  EXPENSE: ["อาหาร","เดินทาง","ช้อปปิ้ง","บิล/ค่าใช้จ่ายประจำ","บันเทิง","สุขภาพ","อื่นๆ"],
+  INCOME: ["เงินเดือน","โบนัส","ฟรีแลนซ์","ของขวัญ","อื่นๆ"]
+};
+const CAT_ICONS = {"อาหาร":"🍜","เดินทาง":"🚗","ช้อปปิ้ง":"🛍️","บิล/ค่าใช้จ่ายประจำ":"🧾","บันเทิง":"🎬","สุขภาพ":"💊","เงินเดือน":"💵","โบนัส":"🎁","ฟรีแลนซ์":"💻","ของขวัญ":"🎉","อื่นๆ":"📦"};
+
+let profiles = [];
+let currentProfile = null;
+let currentData = null;
+let pendingUnlockId = null;
+let pinBuffer = "";
+let formType = "EXPENSE";
+let formSelectedCat = null;
+let editingTxId = null;
+let prevFormScreen = "screen-dashboard";
+let viewMonth = new Date().getMonth();
+let viewYear = new Date().getFullYear();
+let catModalType = "EXPENSE";
+
+function loadProfiles(){
+  profiles = JSON.parse(localStorage.getItem("expapp_profiles") || "[]");
+}
+function saveProfiles(){
+  localStorage.setItem("expapp_profiles", JSON.stringify(profiles));
+}
+function loadData(profileId){
+  const raw = localStorage.getItem("expapp_data_" + profileId);
+  if(raw) return JSON.parse(raw);
+  return { transactions: [], categories: { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] } };
+}
+function saveData(){
+  if(currentProfile) localStorage.setItem("expapp_data_" + currentProfile.id, JSON.stringify(currentData));
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function showScreen(id){
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(()=>t.classList.remove("show"), 1800);
+}
+
+/* ---------- PROFILE SELECT ---------- */
+function renderProfileList(){
+  const list = document.getElementById("profileList");
+  list.innerHTML = "";
+  if(profiles.length === 0){
+    list.innerHTML = '<p style="color:var(--muted); font-size:13px; margin-bottom:10px;">ยังไม่มีโปรไฟล์ กดปุ่มด้านล่างเพื่อเริ่มต้น</p>';
+    return;
+  }
+  profiles.forEach(p => {
+    const div = document.createElement("div");
+    div.className = "profile-item";
+    div.innerHTML = `
+      <div class="profile-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="profile-name">${escapeHtml(p.name)}</div>
+      <button class="profile-del" onclick="event.stopPropagation(); deleteProfile('${p.id}')">✕</button>
+    `;
+    div.onclick = () => openPinScreen(p.id);
+    list.appendChild(div);
+  });
+}
+function escapeHtml(s){
+  const d = document.createElement("div"); d.textContent = s; return d.innerHTML;
+}
+function showCreateProfile(){
+  document.getElementById("newProfileName").value = "";
+  document.getElementById("newProfilePin").value = "";
+  showScreen("screen-createprofile");
+}
+function createProfile(){
+  const name = document.getElementById("newProfileName").value.trim();
+  const pin = document.getElementById("newProfilePin").value.trim();
+  if(!name){ toast("กรุณาใส่ชื่อ"); return; }
+  if(!/^\d{4}$/.test(pin)){ toast("PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
+  const p = { id: uid(), name, pin };
+  profiles.push(p);
+  saveProfiles();
+  const data = { transactions: [], categories: { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] } };
+  localStorage.setItem("expapp_data_" + p.id, JSON.stringify(data));
+  toast("สร้างโปรไฟล์สำเร็จ");
+  renderProfileList();
+  openPinScreen(p.id);
+}
+function deleteProfile(id){
+  if(!confirm("ลบโปรไฟล์นี้? ข้อมูลทั้งหมดในโปรไฟล์นี้จะหายไป")) return;
+  profiles = profiles.filter(p => p.id !== id);
+  saveProfiles();
+  localStorage.removeItem("expapp_data_" + id);
+  renderProfileList();
+}
+
+/* ---------- PIN SCREEN ---------- */
+function openPinScreen(profileId){
+  pendingUnlockId = profileId;
+  pinBuffer = "";
+  const p = profiles.find(x => x.id === profileId);
+  document.getElementById("pinAvatar").textContent = p.name.charAt(0).toUpperCase();
+  document.getElementById("pinProfileName").textContent = p.name;
+  renderPinDots();
+  renderKeypad();
+  showScreen("screen-pin");
+}
+function renderPinDots(){
+  const dots = document.querySelectorAll("#pinDots .pin-dot");
+  dots.forEach((d,i) => d.classList.toggle("filled", i < pinBuffer.length));
+}
+function renderKeypad(){
+  const kp = document.getElementById("pinKeypad");
+  kp.innerHTML = "";
+  const keys = ["1","2","3","4","5","6","7","8","9","","0","⌫"];
+  keys.forEach(k => {
+    const btn = document.createElement("button");
+    btn.textContent = k;
+    if(k === "") btn.style.visibility = "hidden";
+    btn.onclick = () => pinKeyPress(k);
+    kp.appendChild(btn);
+  });
+}
+function pinKeyPress(k){
+  if(k === "" ) return;
+  if(k === "⌫"){ pinBuffer = pinBuffer.slice(0,-1); renderPinDots(); return; }
+  if(pinBuffer.length >= 4) return;
+  pinBuffer += k;
+  renderPinDots();
+  if(pinBuffer.length === 4){
+    setTimeout(() => checkPin(), 150);
+  }
+}
+function checkPin(){
+  const p = profiles.find(x => x.id === pendingUnlockId);
+  if(p.pin === pinBuffer){
+    login(p);
+  } else {
+    toast("PIN ไม่ถูกต้อง");
+    pinBuffer = "";
+    renderPinDots();
+  }
+}
+function login(p){
+  currentProfile = p;
+  currentData = loadData(p.id);
+  if(!currentData.categories) currentData.categories = { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] };
+  document.getElementById("bottomnav").style.display = "flex";
+  document.getElementById("fabBtn").style.display = "flex";
+  document.getElementById("greetName").textContent = "สวัสดี, " + p.name;
+  document.getElementById("settingsName").textContent = p.name;
+  navTo("screen-dashboard");
+  refreshAll();
+}
+function logout(){
+  currentProfile = null; currentData = null;
+  document.getElementById("bottomnav").style.display = "none";
+  document.getElementById("fabBtn").style.display = "none";
+  renderProfileList();
+  showScreen("screen-profiles");
+}
+
+/* ---------- NAV ---------- */
+function navTo(screenId){
+  document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.dataset.screen === screenId));
+  showScreen(screenId);
+  if(screenId === "screen-dashboard") renderDashboard();
+  else document.getElementById("onboardArrow").style.display = "none";
+  if(screenId === "screen-list") renderList();
+  if(screenId === "screen-chart") renderChart();
+}
+function refreshAll(){
+  renderDashboard(); renderList(); renderChart();
+}
+
+/* ---------- MONTH NAV ---------- */
+function changeMonth(delta){
+  viewMonth += delta;
+  if(viewMonth < 0){ viewMonth = 11; viewYear--; }
+  if(viewMonth > 11){ viewMonth = 0; viewYear++; }
+  renderDashboard(); renderChart();
+}
+const THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+function monthLabel(){ return THAI_MONTHS[viewMonth] + " " + (viewYear + 543); }
+function txInViewMonth(list){
+  return list.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+  });
+}
+function fmtMoney(n){
+  return "฿" + Number(n||0).toLocaleString("th-TH", {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+/* ---------- DASHBOARD ---------- */
+function renderDashboard(){
+  document.getElementById("monthLabel").textContent = monthLabel();
+  const hasAnyTx = currentData.transactions.length > 0;
+  document.getElementById("onboardTip").style.display = hasAnyTx ? "none" : "flex";
+  document.getElementById("onboardArrow").style.display = hasAnyTx ? "none" : "block";
+  const monthTx = txInViewMonth(currentData.transactions);
+  const income = monthTx.filter(t=>t.type==="INCOME").reduce((s,t)=>s+t.amount,0);
+  const expense = monthTx.filter(t=>t.type==="EXPENSE").reduce((s,t)=>s+t.amount,0);
+  document.getElementById("incomeAmt").textContent = fmtMoney(income);
+  document.getElementById("expenseAmt").textContent = fmtMoney(expense);
+  document.getElementById("balanceAmt").textContent = fmtMoney(income - expense);
+
+  const recent = [...currentData.transactions].sort((a,b)=>b.date-a.date || b.createdAt-a.createdAt).slice(0,5);
+  const container = document.getElementById("recentList");
+  container.innerHTML = "";
+  if(recent.length === 0){
+    container.innerHTML = '<div class="empty-state"><div class="emoji">🧾</div>ยังไม่มีรายการ</div>';
+    return;
+  }
+  recent.forEach(t => container.appendChild(txItemEl(t)));
+}
+function txItemEl(t){
+  const div = document.createElement("div");
+  div.className = "tx-item";
+  const icon = CAT_ICONS[t.category] || "📦";
+  div.innerHTML = `
+    <div class="tx-left">
+      <div class="tx-icon ${t.type==='INCOME'?'income':'expense'}">${icon}</div>
+      <div class="tx-info">
+        <div class="cat">${escapeHtml(t.category)}</div>
+        <div class="note">${new Date(t.date).toLocaleDateString('th-TH')}${t.note ? ' · ' + escapeHtml(t.note) : ''}</div>
+      </div>
+    </div>
+    <div class="tx-amt ${t.type==='INCOME'?'income':'expense'}">${t.type==='INCOME'?'+':'-'}${fmtMoney(t.amount)}</div>
+  `;
+  div.onclick = () => openEditForm(t.id);
+  return div;
+}
+
+/* ---------- LIST ---------- */
+function renderList(){
+  const filter = document.getElementById("filterType").value;
+  let list = [...currentData.transactions].sort((a,b)=>b.date-a.date || b.createdAt-a.createdAt);
+  if(filter !== "ALL") list = list.filter(t => t.type === filter);
+  const container = document.getElementById("fullList");
+  container.innerHTML = "";
+  if(list.length === 0){
+    container.innerHTML = '<div class="empty-state"><div class="emoji">🧾</div>ไม่มีรายการ</div>';
+    return;
+  }
+  list.forEach(t => container.appendChild(txItemEl(t)));
+}
+
+/* ---------- FORM (ADD/EDIT) ---------- */
+function openAddForm(){
+  document.getElementById("onboardArrow").style.display = "none";
+  editingTxId = null;
+  formType = "EXPENSE";
+  prevFormScreen = document.querySelector(".navbtn.active")?.dataset.screen || "screen-dashboard";
+  document.getElementById("formTitle").textContent = "เพิ่มรายการ";
+  document.getElementById("formAmount").value = "";
+  document.getElementById("formNote").value = "";
+  document.getElementById("formDate").value = new Date().toISOString().slice(0,10);
+  document.getElementById("deleteBtn").style.display = "none";
+  setFormType("EXPENSE");
+  showScreen("screen-form");
+}
+function openEditForm(txId){
+  const t = currentData.transactions.find(x => x.id === txId);
+  if(!t) return;
+  editingTxId = txId;
+  prevFormScreen = document.querySelector(".navbtn.active")?.dataset.screen || "screen-dashboard";
+  document.getElementById("formTitle").textContent = "แก้ไขรายการ";
+  document.getElementById("formAmount").value = t.amount;
+  document.getElementById("formNote").value = t.note || "";
+  document.getElementById("formDate").value = new Date(t.date).toISOString().slice(0,10);
+  document.getElementById("deleteBtn").style.display = "block";
+  setFormType(t.type, t.category);
+  showScreen("screen-form");
+}
+function setFormType(type, selectedCat){
+  formType = type;
+  document.getElementById("toggleExpense").classList.toggle("active", type==="EXPENSE");
+  document.getElementById("toggleIncome").classList.toggle("active", type==="INCOME");
+  const cats = currentData.categories[type] || [];
+  formSelectedCat = selectedCat || cats[0] || null;
+  const wrap = document.getElementById("formCategories");
+  wrap.innerHTML = "";
+  cats.forEach(c => {
+    const chip = document.createElement("span");
+    chip.className = "cat-chip" + (c === formSelectedCat ? " selected" : "");
+    chip.textContent = (CAT_ICONS[c]||"📦") + " " + c;
+    chip.onclick = () => { formSelectedCat = c; setFormType(type, c); };
+    wrap.appendChild(chip);
+  });
+}
+function saveTransaction(){
+  const amount = parseFloat(document.getElementById("formAmount").value);
+  const dateVal = document.getElementById("formDate").value;
+  const note = document.getElementById("formNote").value.trim();
+  if(!amount || amount <= 0){ toast("กรุณาใส่จำนวนเงินที่ถูกต้อง"); return; }
+  if(!formSelectedCat){ toast("กรุณาเลือกหมวดหมู่"); return; }
+  if(!dateVal){ toast("กรุณาเลือกวันที่"); return; }
+  const dateMs = new Date(dateVal).getTime();
+
+  if(editingTxId){
+    const t = currentData.transactions.find(x => x.id === editingTxId);
+    Object.assign(t, { type: formType, amount, category: formSelectedCat, note, date: dateMs, updatedAt: Date.now() });
+    toast("บันทึกการแก้ไขแล้ว");
+  } else {
+    currentData.transactions.push({
+      id: uid(), type: formType, amount, category: formSelectedCat, note, date: dateMs,
+      createdAt: Date.now(), updatedAt: Date.now()
+    });
+    toast("บันทึกรายการแล้ว");
+  }
+  saveData();
+  showScreen(prevFormScreen);
+  document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.dataset.screen === prevFormScreen));
+  refreshAll();
+}
+function deleteTransaction(){
+  if(!confirm("ลบรายการนี้?")) return;
+  currentData.transactions = currentData.transactions.filter(t => t.id !== editingTxId);
+  saveData();
+  toast("ลบรายการแล้ว");
+  showScreen(prevFormScreen);
+  refreshAll();
+}
+
+/* ---------- CHART (pure canvas pie, no external deps) ---------- */
+function renderChart(){
+  document.getElementById("monthLabel2").textContent = monthLabel();
+  const monthTx = txInViewMonth(currentData.transactions).filter(t => t.type === "EXPENSE");
+  const totals = {};
+  monthTx.forEach(t => { totals[t.category] = (totals[t.category]||0) + t.amount; });
+  const entries = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  const canvas = document.getElementById("pieCanvas");
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const legend = document.getElementById("pieLegend");
+  legend.innerHTML = "";
+  const colors = ["#2f6f4f","#e0685f","#3b5bdb","#f0ad4e","#9b59b6","#16a085","#e67e22","#34495e"];
+  if(entries.length === 0){
+    ctx.fillStyle = "#e5e7eb";
+    ctx.beginPath(); ctx.arc(110,110,100,0,Math.PI*2); ctx.fill();
+    legend.innerHTML = '<div class="empty-state">ยังไม่มีรายจ่ายเดือนนี้</div>';
+    return;
+  }
+  const total = entries.reduce((s,[,v])=>s+v,0);
+  let start = -Math.PI/2;
+  entries.forEach(([cat,val], i) => {
+    const slice = (val/total) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(110,110);
+    ctx.arc(110,110,100, start, start+slice);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    start += slice;
+
+    const item = document.createElement("div");
+    item.className = "legend-item";
+    item.innerHTML = `<span class="legend-swatch" style="background:${colors[i%colors.length]}"></span>${escapeHtml(cat)} — ${fmtMoney(val)} (${Math.round(val/total*100)}%)`;
+    legend.appendChild(item);
+  });
+}
+
+/* ---------- CATEGORY MANAGEMENT ---------- */
+function manageCategories(){
+  catModalType = "EXPENSE";
+  setCatModalType("EXPENSE");
+  document.getElementById("catModal").classList.add("active");
+}
+function closeCatModal(){ document.getElementById("catModal").classList.remove("active"); }
+function setCatModalType(type){
+  catModalType = type;
+  document.getElementById("catToggleExpense").classList.toggle("active", type==="EXPENSE");
+  document.getElementById("catToggleIncome").classList.toggle("active", type==="INCOME");
+  renderCatManageList();
+}
+function renderCatManageList(){
+  const list = document.getElementById("catManageList");
+  list.innerHTML = "";
+  (currentData.categories[catModalType]||[]).forEach(c => {
+    const row = document.createElement("div");
+    row.className = "tx-item";
+    row.innerHTML = `<div>${(CAT_ICONS[c]||"📦")} ${escapeHtml(c)}</div><button class="profile-del" onclick="removeCategory('${escapeHtml(c).replace(/'/g,"\\'")}')">✕</button>`;
+    list.appendChild(row);
+  });
+}
+function addCategory(){
+  const input = document.getElementById("newCatInput");
+  const name = input.value.trim();
+  if(!name) return;
+  if(!currentData.categories[catModalType].includes(name)){
+    currentData.categories[catModalType].push(name);
+    saveData();
+  }
+  input.value = "";
+  renderCatManageList();
+}
+function removeCategory(name){
+  currentData.categories[catModalType] = currentData.categories[catModalType].filter(c => c !== name);
+  saveData();
+  renderCatManageList();
+}
+
+/* ---------- PIN CHANGE ---------- */
+function showChangePin(){
+  document.getElementById("newPinInput").value = "";
+  document.getElementById("pinModal").classList.add("active");
+}
+function closePinModal(){ document.getElementById("pinModal").classList.remove("active"); }
+function saveNewPin(){
+  const pin = document.getElementById("newPinInput").value.trim();
+  if(!/^\d{4}$/.test(pin)){ toast("PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
+  currentProfile.pin = pin;
+  const idx = profiles.findIndex(p => p.id === currentProfile.id);
+  profiles[idx] = currentProfile;
+  saveProfiles();
+  closePinModal();
+  toast("เปลี่ยน PIN แล้ว");
+}
+
+function exportJSON(){
+  const backup = {
+    app: "สมุดบัญชีของฉัน",
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    profileName: currentProfile.name,
+    data: currentData
+  };
+  const json = JSON.stringify(backup, null, 2);
+  const blob = new Blob([json], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const dateTag = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `backup_${currentProfile.name}_${dateTag}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("สำรองข้อมูลเป็นไฟล์ JSON แล้ว");
+}
+function triggerImportJSON(){
+  document.getElementById("importFileInput").value = "";
+  document.getElementById("importFileInput").click();
+}
+function handleImportFile(event){
+  const file = event.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    let parsed;
+    try{
+      parsed = JSON.parse(e.target.result);
+    }catch(err){
+      toast("ไฟล์ไม่ถูกต้อง กรุณาเลือกไฟล์สำรองที่ถูกต้อง");
+      return;
+    }
+    if(!parsed || !parsed.data || !Array.isArray(parsed.data.transactions)){
+      toast("ไฟล์นี้ไม่ใช่ไฟล์สำรองของแอปนี้");
+      return;
+    }
+    const count = parsed.data.transactions.length;
+    const fromName = parsed.profileName || "ไม่ทราบชื่อ";
+    const ok = confirm(`พบไฟล์สำรองของ "${fromName}" มี ${count} รายการ\n\nต้องการนำเข้าและแทนที่ข้อมูลปัจจุบันของโปรไฟล์ "${currentProfile.name}" หรือไม่?\n(ข้อมูลปัจจุบันจะถูกแทนที่ทั้งหมด)`);
+    if(!ok) return;
+    currentData.transactions = parsed.data.transactions;
+    if(parsed.data.categories) currentData.categories = parsed.data.categories;
+    saveData();
+    toast("กู้คืนข้อมูลสำเร็จ");
+    refreshAll();
+  };
+  reader.readAsText(file);
+}
+
+/* ---------- EXPORT / CLEAR ---------- */
+function exportCSV(){
+  const rows = [["วันที่","ประเภท","หมวดหมู่","จำนวนเงิน","โน้ต"]];
+  [...currentData.transactions].sort((a,b)=>a.date-b.date).forEach(t => {
+    rows.push([
+      new Date(t.date).toLocaleDateString('th-TH'),
+      t.type === "INCOME" ? "รายรับ" : "รายจ่าย",
+      t.category, t.amount, t.note || ""
+    ]);
+  });
+  const csv = "\uFEFF" + rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `expense_${currentProfile.name}_${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast("ส่งออกไฟล์ CSV แล้ว");
+}
+function confirmClearData(){
+  if(!confirm("ยืนยันการล้างข้อมูลทั้งหมดของโปรไฟล์นี้? ไม่สามารถกู้คืนได้")) return;
+  currentData.transactions = [];
+  saveData();
+  toast("ล้างข้อมูลแล้ว");
+  refreshAll();
+}
+
+/* ---------- INIT ---------- */
+window.onload = () => {
+  loadProfiles();
+  renderProfileList();
+};
+</script>
+</body>
+</html>
