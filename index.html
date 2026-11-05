@@ -380,6 +380,13 @@
   .set-foot{text-align:center; font-size:11.5px; color:var(--muted); margin-top:18px;}
   .sheet-list{margin:6px 0 14px;}
   .side-navbtn{flex:0 0 auto !important; margin-bottom:4px;}
+  .sync-chip{display:inline-flex; align-items:center; gap:5px; margin-top:6px; margin-left:6px; font-size:12px; font-weight:600; color:var(--brand-dark); background:var(--brand-light); border:none; border-radius:14px; padding:5px 10px; cursor:pointer; font-family:inherit;}
+  .sync-chip.err{background:#FDEAEA; color:var(--danger);}
+  .sync-code{font-family:'Fraunces',serif; font-size:24px; font-weight:600; letter-spacing:2px; text-align:center; background:var(--paper); border-radius:12px; padding:14px; margin:6px 0 10px; color:var(--ink); user-select:all;}
+  .sync-pick{display:flex; flex-direction:column; gap:10px; margin:12px 0;}
+  .sync-warn{font-size:12.5px; line-height:1.5; background:#FFF6E0; border:1px solid #F2C94C; color:#6B5310; border-radius:12px; padding:10px 12px; margin:10px 0;}
+  .check-row{display:flex; gap:8px; align-items:flex-start; font-size:13px; margin:10px 0;}
+  .check-row input{width:20px; height:20px; flex-shrink:0; accent-color:var(--brand);}
   .amount-input::-webkit-outer-spin-button, .amount-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
   .amount-input{-moz-appearance:textfield;}
   .set-row:has(+ .set-note[style*="block"]){border-bottom:none;}
@@ -470,6 +477,7 @@
             <span id="monthLabel"></span>
             <button onclick="changeMonth(1)" aria-label="เดือนถัดไป">›</button>
           </div>
+          <button class="sync-chip" id="syncChip" style="display:none;" onclick="openSyncModal()"></button>
         </div>
         <button class="icon-btn" onclick="navTo('screen-settings')" title="ตั้งค่า">👤</button>
       </div>
@@ -651,6 +659,11 @@
         <button class="set-row" onclick="openPayerModal()"><span class="set-ic">👥</span><span class="set-lbl">ผู้จ่ายเงิน<small id="setPayerSub">แก้ชื่อ เพิ่ม หรือลบ</small></span><span class="chev">›</span></button>
       </div>
 
+      <div class="set-title">ซิงค์ข้ามเครื่อง</div>
+      <div class="set-group">
+        <button class="set-row" onclick="openSyncModal()"><span class="set-ic">☁️</span><span class="set-lbl">ซิงค์ / ใช้ร่วมกับคนอื่น<small id="setSyncSub">ปิดอยู่</small></span><span class="chev">›</span></button>
+      </div>
+
       <div class="set-title">สำรองข้อมูล</div>
       <div class="set-group">
         <div class="set-row" style="cursor:default;">
@@ -759,6 +772,11 @@
     </div>
   </div>
 
+  <!-- Modal: sync -->
+  <div class="modal-overlay" id="syncModal">
+    <div class="modal-sheet" id="syncSheet"></div>
+  </div>
+
   <!-- Modal: share sheet -->
   <div class="modal-overlay" id="shareModal">
     <div class="modal-sheet">
@@ -857,8 +875,15 @@ function loadData(profileId){
   }
   return { transactions: [], categories: { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] }, currency: "THB", payers: [...DEFAULT_PAYERS] };
 }
-function saveData(){
-  if(currentProfile) localStorage.setItem("expapp_data_" + currentProfile.id, JSON.stringify(currentData));
+function settingsSig(d){ return JSON.stringify([d.categories, d.payers, d.currency]); }
+let lastSettingsSig = "";
+function saveData(opts){
+  if(!currentProfile) return;
+  const sig = settingsSig(currentData);
+  if(lastSettingsSig && sig !== lastSettingsSig) currentData.settingsUpdatedAt = Date.now();
+  lastSettingsSig = sig;
+  localStorage.setItem("expapp_data_" + currentProfile.id, JSON.stringify(currentData));
+  if(!(opts && opts.noSync)) scheduleSync();
 }
 function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
 
@@ -1007,6 +1032,9 @@ function login(p){
   refreshAll();
   renderAutoBackupSettings();
   checkDailyBackup();
+  lastSettingsSig = settingsSig(currentData);
+  renderSyncStatus();
+  syncNow();
 }
 function changeCurrency(){
   currentData.currency = document.getElementById("currencySelect").value;
@@ -1015,6 +1043,7 @@ function changeCurrency(){
   refreshAll();
 }
 function logout(){
+  clearTimeout(syncTimer);
   currentProfile = null; currentData = null;
   document.getElementById("bottomnav").style.display = "none";
   document.getElementById("fabBtn").style.display = "none";
@@ -1270,11 +1299,289 @@ function saveTransaction(){
 }
 function deleteTransaction(){
   if(!confirm("ลบรายการนี้?")) return;
+  markDeleted([editingTxId]);
   currentData.transactions = currentData.transactions.filter(t => t.id !== editingTxId);
   saveData();
   toast("ลบรายการแล้ว");
   navTo(prevFormScreen);
   refreshAll();
+}
+
+/* ---------- SYNC (end-to-end encrypted, Google Apps Script backend) ---------- */
+// Paste the Apps Script /exec URL here after deploying. Can also be set per device in the sync screen.
+const DEFAULT_SYNC_URL = "https://script.google.com/macros/s/AKfycbzAGLtLXEshhKaqc8bqxjgLaW8ZKh4XHLjFCJ6U9qHeK7d603J3rztQlMRnKLus99Daew/exec";
+function syncUrl(){ try{ return localStorage.getItem("expapp_sync_url") || DEFAULT_SYNC_URL; }catch(e){ return DEFAULT_SYNC_URL; } }
+function getSync(){ if(!currentProfile) return null; try{ return JSON.parse(localStorage.getItem("expapp_sync_" + currentProfile.id) || "null"); }catch(e){ return null; } }
+function saveSyncCfg(cfg){ try{ cfg ? localStorage.setItem("expapp_sync_" + currentProfile.id, JSON.stringify(cfg)) : localStorage.removeItem("expapp_sync_" + currentProfile.id); }catch(e){} }
+
+const SYNC_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+function newGroupCode(){
+  const r = crypto.getRandomValues(new Uint8Array(12));
+  let s = ""; r.forEach((b,i) => { s += SYNC_ALPHABET[b % SYNC_ALPHABET.length]; if(i===3||i===7) s += "-"; });
+  return s;
+}
+function normCode(code){ return (code||"").toUpperCase().replace(/[^A-Z0-9]/g, ""); }
+function fmtCode(code){ const n = normCode(code); return n.replace(/(.{4})(?=.)/g, "$1-"); }
+const b64 = { enc(u8){ let s=""; for(let i=0;i<u8.length;i+=0x8000) s += String.fromCharCode.apply(null, u8.subarray(i,i+0x8000)); return btoa(s); },
+              dec(str){ const s = atob(str); const u = new Uint8Array(s.length); for(let i=0;i<s.length;i++) u[i]=s.charCodeAt(i); return u; } };
+const toHex = u8 => [...u8].map(b => b.toString(16).padStart(2,"0")).join("");
+async function sha256(u8){ return new Uint8Array(await crypto.subtle.digest("SHA-256", u8)); }
+
+// Group id and auth are hashes; the AES key never leaves the device.
+async function deriveSyncKeys(code, password){
+  const te = new TextEncoder(), n = normCode(code);
+  const base = await crypto.subtle.importKey("raw", te.encode(password), "PBKDF2", false, ["deriveBits"]);
+  const bits = new Uint8Array(await crypto.subtle.deriveBits({ name:"PBKDF2", salt: te.encode("ctx-expense-sync:" + n), iterations:150000, hash:"SHA-256" }, base, 512));
+  return {
+    code: n,
+    id: toHex(await sha256(te.encode("ctx-expense-id:" + n))),
+    auth: toHex(await sha256(bits.slice(32))),
+    key: b64.enc(bits.slice(0, 32))
+  };
+}
+async function aesKey(cfg){ return crypto.subtle.importKey("raw", b64.dec(cfg.key), "AES-GCM", false, ["encrypt","decrypt"]); }
+async function gzip(u8, mode){
+  const s = new Blob([u8]).stream().pipeThrough(mode === "c" ? new CompressionStream("gzip") : new DecompressionStream("gzip"));
+  return new Uint8Array(await new Response(s).arrayBuffer());
+}
+async function encryptBlob(cfg, obj){
+  let data = new TextEncoder().encode(JSON.stringify(obj)), z = "0";
+  if(typeof CompressionStream !== "undefined"){ data = await gzip(data, "c"); z = "1"; }
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = new Uint8Array(await crypto.subtle.encrypt({ name:"AES-GCM", iv }, await aesKey(cfg), data));
+  return "v1." + z + "." + b64.enc(iv) + "." + b64.enc(ct);
+}
+async function decryptBlob(cfg, blob){
+  const [v, z, iv, ct] = blob.split(".");
+  if(v !== "v1") throw new Error("format");
+  let data = new Uint8Array(await crypto.subtle.decrypt({ name:"AES-GCM", iv: b64.dec(iv) }, await aesKey(cfg), b64.dec(ct)));
+  if(z === "1") data = await gzip(data, "d");
+  return JSON.parse(new TextDecoder().decode(data));
+}
+
+function markDeleted(ids){
+  if(!currentData.deletedIds) currentData.deletedIds = {};
+  const now = Date.now();
+  ids.forEach(id => { currentData.deletedIds[id] = now; });
+}
+function syncPayload(d){
+  return { transactions: d.transactions || [], deletedIds: d.deletedIds || {}, categories: d.categories, payers: d.payers,
+           currency: d.currency, settingsUpdatedAt: d.settingsUpdatedAt || 0 };
+}
+// Newest edit wins per transaction; deletions travel as tombstones; settings follow the newest change.
+function mergeData(local, remote){
+  const del = {};
+  [remote.deletedIds || {}, local.deletedIds || {}].forEach(m => Object.entries(m).forEach(([k,v]) => { del[k] = Math.max(v, del[k] || 0); }));
+  const map = {};
+  [...(remote.transactions || []), ...(local.transactions || [])].forEach(t => {
+    const cur = map[t.id];
+    if(!cur || (t.updatedAt || t.createdAt || 0) >= (cur.updatedAt || cur.createdAt || 0)) map[t.id] = t;
+  });
+  const txs = Object.values(map).filter(t => !(del[t.id] && del[t.id] >= (t.updatedAt || t.createdAt || 0)));
+  const ls = local.settingsUpdatedAt || 0, rs = remote.settingsUpdatedAt || 0;
+  const s = rs > ls ? remote : local;
+  return Object.assign({}, local, {
+    transactions: txs, deletedIds: del,
+    categories: s.categories || local.categories, payers: s.payers || local.payers, currency: s.currency || local.currency,
+    settingsUpdatedAt: Math.max(ls, rs)
+  });
+}
+async function syncApi(body){
+  const r = await fetch(syncUrl(), { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify(body), redirect:"follow" });
+  if(!r.ok) throw new Error("http_" + r.status);
+  return r.json();
+}
+
+let syncTimer = null, syncBusy = false, syncAgain = false, syncState = { status:"idle", msg:"" };
+function scheduleSync(){
+  if(!getSync() || !syncUrl()) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(() => syncNow(), 1200);
+}
+async function syncNow(manual){
+  const cfg = getSync();
+  if(!cfg || !syncUrl()){ renderSyncStatus(); return; }
+  if(syncBusy){ syncAgain = true; return; }
+  syncBusy = true;
+  setSyncState("busy", "กำลังซิงค์...");
+  const profileAtStart = currentProfile && currentProfile.id;
+  try{
+    for(let attempt = 0; attempt < 4; attempt++){
+      const pulled = await syncApi({ action:"pull", id:cfg.id, auth:cfg.auth });
+      if(!pulled.ok) throw new Error(pulled.error);
+      if(!currentProfile || currentProfile.id !== profileAtStart) return;
+      let remote = null;
+      if(pulled.exists) remote = await decryptBlob(cfg, pulled.blob);
+      const merged = remote ? mergeData(currentData, remote) : currentData;
+      const localChanged = JSON.stringify(syncPayload(merged)) !== JSON.stringify(syncPayload(currentData));
+      const remoteChanged = !remote || JSON.stringify(syncPayload(merged)) !== JSON.stringify(syncPayload(remote));
+      if(localChanged){
+        currentData = Object.assign(currentData, merged);
+        lastSettingsSig = settingsSig(currentData);
+        saveData({ noSync:true });
+        document.getElementById("currencySelect").value = currentData.currency;
+        refreshAll();
+      }
+      if(remoteChanged){
+        const blob = await encryptBlob(cfg, syncPayload(merged));
+        const pushed = await syncApi({ action:"push", id:cfg.id, auth:cfg.auth, baseRev: pulled.rev || 0, blob });
+        if(!pushed.ok){ if(pushed.error === "conflict") continue; throw new Error(pushed.error); }
+      }
+      cfg.lastSync = Date.now();
+      saveSyncCfg(cfg);
+      setSyncState("ok", "");
+      if(manual) toast("ซิงค์เรียบร้อย");
+      return;
+    }
+    throw new Error("conflict");
+  }catch(e){
+    const m = String(e && e.message || e);
+    const msg = m === "auth" ? "รหัสผ่านไม่ถูกต้อง หรือกลุ่มนี้ถูกตั้งรหัสอื่นไว้"
+      : m === "too_large" ? "ข้อมูลใหญ่เกินกว่าจะซิงค์ได้"
+      : (m === "OperationError" || m.includes("decrypt")) ? "ถอดรหัสไม่ได้ รหัสผ่านไม่ตรงกับกลุ่ม"
+      : navigator.onLine === false ? "ออฟไลน์อยู่ จะซิงค์อัตโนมัติเมื่อกลับมาออนไลน์"
+      : "ซิงค์ไม่สำเร็จ จะลองใหม่อัตโนมัติ";
+    setSyncState("err", msg);
+    if(manual) toast(msg);
+  }finally{
+    syncBusy = false;
+    if(syncAgain){ syncAgain = false; scheduleSync(); }
+  }
+}
+function setSyncState(status, msg){ syncState = { status, msg }; renderSyncStatus(); }
+function timeAgo(ts){
+  if(!ts) return "ยังไม่เคย";
+  const s = Math.round((Date.now() - ts) / 1000);
+  if(s < 60) return "เมื่อสักครู่";
+  if(s < 3600) return Math.floor(s/60) + " นาทีที่แล้ว";
+  return new Date(ts).toLocaleString("th-TH", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+}
+function renderSyncStatus(){
+  const cfg = getSync();
+  const chip = document.getElementById("syncChip"), sub = document.getElementById("setSyncSub");
+  if(!chip || !sub) return;
+  if(!cfg){ chip.style.display = "none"; sub.textContent = "ปิดอยู่ · ใช้หลายเครื่องหรือแชร์ทริปกับเพื่อน"; }
+  else {
+    chip.style.display = "inline-flex";
+    chip.classList.toggle("err", syncState.status === "err");
+    chip.textContent = syncState.status === "busy" ? "☁️ กำลังซิงค์..." : syncState.status === "err" ? "⚠️ ซิงค์ไม่สำเร็จ" : "☁️ ซิงค์แล้ว";
+    sub.textContent = `กลุ่ม ${fmtCode(cfg.code)} · ซิงค์ล่าสุด ${timeAgo(cfg.lastSync)}`;
+  }
+  // Only refresh the sheet when it shows live status; never wipe a form the person is typing in.
+  if(cfg && document.getElementById("syncModal").classList.contains("active")) renderSyncModal();
+}
+
+/* --- Sync screen (bottom sheet) --- */
+let syncView = "home", syncDraftCode = "";
+function openSyncModal(){ syncView = "home"; renderSyncModal(); document.getElementById("syncModal").classList.add("active"); }
+function closeSyncModal(){ document.getElementById("syncModal").classList.remove("active"); }
+function syncServerBlock(){
+  return `<details class="fold plain" style="margin-top:8px;"><summary>ตั้งค่าเซิร์ฟเวอร์ (สำหรับผู้ดูแล)</summary>
+    <div class="field"><input type="url" id="syncUrlInput" placeholder="https://script.google.com/macros/s/.../exec" value="${escapeHtml(localStorage.getItem("expapp_sync_url") || "")}"></div>
+    <button class="btn secondary block" onclick="saveSyncUrl()">บันทึกลิงก์เซิร์ฟเวอร์</button></details>`;
+}
+function saveSyncUrl(){
+  const v = document.getElementById("syncUrlInput").value.trim();
+  if(v && !/^https:\/\/script\.google\.com\/macros\/s\/[^/]+\/exec$/.test(v)){ toast("ลิงก์ต้องเป็นลิงก์ Apps Script ที่ลงท้ายด้วย /exec"); return; }
+  try{ v ? localStorage.setItem("expapp_sync_url", v) : localStorage.removeItem("expapp_sync_url"); }catch(e){}
+  toast("บันทึกแล้ว"); renderSyncModal();
+}
+function renderSyncModal(){
+  const el = document.getElementById("syncSheet"), cfg = getSync();
+  if(!syncUrl()){
+    el.innerHTML = `<h3>ซิงค์ข้ามเครื่อง</h3>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6;">ยังไม่ได้เชื่อมเซิร์ฟเวอร์ซิงค์ ผู้ดูแลแอปต้องตั้งค่าครั้งเดียวก่อน</p>
+      ${syncServerBlock()}
+      <button class="btn secondary block" style="margin-top:12px;" onclick="closeSyncModal()">ปิด</button>`;
+    return;
+  }
+  if(cfg){
+    el.innerHTML = `<h3>ซิงค์ข้ามเครื่อง</h3>
+      <p style="font-size:13px; color:var(--muted);">รหัสกลุ่มของคุณ</p>
+      <div class="sync-code">${fmtCode(cfg.code)}</div>
+      <p style="font-size:12.5px; color:var(--muted); line-height:1.6;">ใช้ <b>รหัสกลุ่มนี้ + รหัสผ่านเดิม</b> ในเครื่องอื่น หรือส่งให้คนที่จะใช้บัญชีนี้ร่วมกัน (บอกรหัสผ่านแยกต่างหาก)</p>
+      <div class="set-group sheet-list">
+        <div class="set-row" style="cursor:default;"><span class="set-ic">${syncState.status === "err" ? "⚠️" : "✅"}</span><span class="set-lbl">${syncState.status === "busy" ? "กำลังซิงค์..." : syncState.status === "err" ? escapeHtml(syncState.msg) : "ซิงค์เรียบร้อย"}<small>ซิงค์ล่าสุด ${timeAgo(cfg.lastSync)}</small></span></div>
+        <button class="set-row" onclick="syncNow(true)"><span class="set-ic">🔄</span><span class="set-lbl">ซิงค์ตอนนี้</span><span class="chev">›</span></button>
+        <button class="set-row" onclick="shareSyncCode()"><span class="set-ic">📤</span><span class="set-lbl">ส่งรหัสกลุ่มให้คนอื่น</span><span class="chev">›</span></button>
+        <button class="set-row danger" onclick="leaveSync()"><span class="set-ic">🚪</span><span class="set-lbl">หยุดซิงค์ในเครื่องนี้<small>ข้อมูลในเครื่องและในกลุ่มยังอยู่ครบ</small></span></button>
+      </div>
+      <button class="btn secondary block" onclick="closeSyncModal()">ปิด</button>`;
+    return;
+  }
+  if(syncView === "create"){
+    el.innerHTML = `<h3>สร้างกลุ่มใหม่</h3>
+      <p style="font-size:13px; color:var(--muted);">รหัสกลุ่ม (สุ่มให้แล้ว)</p>
+      <div class="sync-code">${fmtCode(syncDraftCode)}</div>
+      <div class="field"><label>ตั้งรหัสผ่าน (อย่างน้อย 6 ตัว)</label><input type="password" id="syncPass1" autocomplete="new-password"></div>
+      <div class="field"><label>ยืนยันรหัสผ่าน</label><input type="password" id="syncPass2" autocomplete="new-password"></div>
+      <div class="sync-warn">🔐 ข้อมูลจะถูกเข้ารหัสในเครื่องด้วยรหัสผ่านนี้ <b>ไม่มีใครอ่านได้ รวมทั้งผู้ดูแลแอป</b> และ<b>ถ้าลืมรหัสผ่าน จะกู้ข้อมูลบนคลาวด์ไม่ได้</b></div>
+      <label class="check-row"><input type="checkbox" id="syncAck"> <span>จดรหัสกลุ่มและรหัสผ่านไว้แล้ว</span></label>
+      <div class="row-gap"><button class="btn secondary block" onclick="syncView='home'; renderSyncModal();">ย้อนกลับ</button><button class="btn block" id="syncGo" onclick="createSyncGroup()">เริ่มซิงค์</button></div>`;
+    return;
+  }
+  if(syncView === "join"){
+    el.innerHTML = `<h3>เข้าร่วมกลุ่ม</h3>
+      <div class="field"><label>รหัสกลุ่ม</label><input type="text" id="syncJoinCode" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off"></div>
+      <div class="field"><label>รหัสผ่าน</label><input type="password" id="syncJoinPass" autocomplete="current-password"></div>
+      <div class="sync-warn">รายการที่มีอยู่ในเครื่องนี้จะถูกรวมเข้ากับข้อมูลของกลุ่ม</div>
+      <div class="row-gap"><button class="btn secondary block" onclick="syncView='home'; renderSyncModal();">ย้อนกลับ</button><button class="btn block" id="syncGo" onclick="joinSyncGroup()">เข้าร่วม</button></div>`;
+    return;
+  }
+  el.innerHTML = `<h3>ซิงค์ข้ามเครื่อง</h3>
+    <p style="font-size:13px; color:var(--muted); line-height:1.6;">ใช้ข้อมูลเดียวกันได้หลายเครื่อง หรือใช้บัญชีร่วมกับเพื่อนในทริป ข้อมูลถูกเข้ารหัสก่อนส่งขึ้นคลาวด์</p>
+    <div class="sync-pick">
+      <button class="btn block" onclick="syncDraftCode=newGroupCode(); syncView='create'; renderSyncModal();">✨ สร้างกลุ่มใหม่</button>
+      <button class="btn secondary block" onclick="syncView='join'; renderSyncModal();">🔑 เข้าร่วมกลุ่มที่มีอยู่</button>
+    </div>
+    <button class="btn secondary block" onclick="closeSyncModal()">ปิด</button>
+    ${syncServerBlock()}`;
+}
+async function startSync(code, password, mustExist){
+  const btn = document.getElementById("syncGo");
+  if(btn){ btn.disabled = true; btn.textContent = "กำลังเชื่อมต่อ..."; }
+  try{
+    const cfg = await deriveSyncKeys(code, password);
+    const probe = await syncApi({ action:"pull", id:cfg.id, auth:cfg.auth });
+    if(!probe.ok) throw new Error(probe.error);
+    if(mustExist && !probe.exists) throw new Error("not_found");
+    if(!mustExist && probe.exists) throw new Error("exists");
+    if(probe.exists) await decryptBlob(cfg, probe.blob); // confirms the password before connecting
+    cfg.lastSync = 0;
+    saveSyncCfg(cfg);
+    syncView = "home";
+    renderSyncModal();
+    await syncNow();
+    toast(mustExist ? "เข้าร่วมกลุ่มแล้ว" : "เริ่มซิงค์แล้ว");
+  }catch(e){
+    const m = String(e && e.message || e);
+    toast(m === "auth" ? "รหัสผ่านไม่ถูกต้อง" : m === "not_found" ? "ไม่พบกลุ่มนี้ ตรวจสอบรหัสกลุ่มอีกครั้ง" : m === "exists" ? "รหัสนี้ถูกใช้แล้ว กดย้อนกลับแล้วสร้างใหม่" : "เชื่อมต่อไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต");
+    if(btn){ btn.disabled = false; btn.textContent = mustExist ? "เข้าร่วม" : "เริ่มซิงค์"; }
+  }
+  renderSyncStatus();
+}
+function createSyncGroup(){
+  const p1 = document.getElementById("syncPass1").value, p2 = document.getElementById("syncPass2").value;
+  if(p1.length < 6){ toast("รหัสผ่านต้องมีอย่างน้อย 6 ตัว"); return; }
+  if(p1 !== p2){ toast("รหัสผ่านทั้งสองช่องไม่ตรงกัน"); return; }
+  if(!document.getElementById("syncAck").checked){ toast("กรุณาจดรหัสไว้ก่อน แล้วติ๊กยืนยัน"); return; }
+  startSync(syncDraftCode, p1, false);
+}
+function joinSyncGroup(){
+  const code = normCode(document.getElementById("syncJoinCode").value), pass = document.getElementById("syncJoinPass").value;
+  if(code.length !== 12){ toast("รหัสกลุ่มต้องมี 12 ตัว เช่น ABCD-EFGH-JKMN"); return; }
+  if(!pass){ toast("กรุณาใส่รหัสผ่าน"); return; }
+  startSync(code, pass, true);
+}
+function leaveSync(){
+  if(!confirm("หยุดซิงค์ในเครื่องนี้? ข้อมูลในเครื่องยังอยู่ และกลับมาเข้าร่วมใหม่ได้ด้วยรหัสกลุ่มและรหัสผ่านเดิม")) return;
+  saveSyncCfg(null); setSyncState("idle", ""); toast("หยุดซิงค์แล้ว");
+}
+function shareSyncCode(){
+  const cfg = getSync(); if(!cfg) return;
+  const text = `เข้าร่วมบัญชีของฉันใน Chatawut Touchpi Expense Tracker\n${location.href.split("?")[0]}\n\nตั้งค่า > ซิงค์ > เข้าร่วมกลุ่มที่มีอยู่\nรหัสกลุ่ม: ${fmtCode(cfg.code)}\n(รหัสผ่านจะบอกแยกต่างหาก)`;
+  if(navigator.share) navigator.share({ text }).catch(()=>{});
+  else if(navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast("คัดลอกแล้ว")).catch(() => toast("คัดลอกไม่สำเร็จ"));
 }
 
 /* ---------- UI helpers ---------- */
@@ -1365,7 +1672,7 @@ function renamePayer(i){
   if(!n || n === old) return;
   if(currentData.payers.includes(n)){ toast("มีชื่อนี้แล้ว"); return; }
   currentData.payers[i] = n;
-  currentData.transactions.forEach(t => { if(t.payer === old) t.payer = n; });
+  currentData.transactions.forEach(t => { if(t.payer === old){ t.payer = n; t.updatedAt = Date.now(); } });
   saveData(); renderPayerManageList(); toast("แก้ชื่อแล้ว รายการเก่าเปลี่ยนตาม");
 }
 function deletePayer(i){
@@ -1374,7 +1681,7 @@ function deletePayer(i){
   const msg = used ? `ลบ "${n}"? รายการ ${used} รายการของ ${n} จะกลายเป็น "ไม่ระบุ"` : `ลบ "${n}"?`;
   if(!confirm(msg)) return;
   currentData.payers.splice(i, 1);
-  currentData.transactions.forEach(t => { if(t.payer === n) t.payer = ""; });
+  currentData.transactions.forEach(t => { if(t.payer === n){ t.payer = ""; t.updatedAt = Date.now(); } });
   saveData(); renderPayerManageList();
 }
 
@@ -2079,7 +2386,8 @@ function exportCSV(){
   toast("ส่งออกไฟล์ CSV แล้ว");
 }
 function confirmClearData(){
-  if(!confirm("ยืนยันการล้างข้อมูลทั้งหมดของโปรไฟล์นี้? ไม่สามารถกู้คืนได้")) return;
+  if(!confirm(getSync() ? "ยืนยันการล้างข้อมูลทั้งหมด? รายการจะถูกลบในทุกเครื่องที่ซิงค์กลุ่มนี้ด้วย กู้คืนไม่ได้" : "ยืนยันการล้างข้อมูลทั้งหมดของโปรไฟล์นี้? ไม่สามารถกู้คืนได้")) return;
+  markDeleted(currentData.transactions.map(t => t.id));
   currentData.transactions = [];
   saveData();
   toast("ล้างข้อมูลแล้ว");
@@ -2087,6 +2395,8 @@ function confirmClearData(){
 }
 
 /* ---------- INIT ---------- */
+document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && currentProfile) syncNow(); });
+window.addEventListener("online", () => { if(currentProfile) syncNow(); });
 window.onload = () => {
   initUi();
   loadProfiles();
