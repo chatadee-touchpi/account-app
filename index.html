@@ -380,6 +380,41 @@
   .set-foot{text-align:center; font-size:11.5px; color:var(--muted); margin-top:18px;}
   .sheet-list{margin:6px 0 14px;}
   .side-navbtn{flex:0 0 auto !important; margin-bottom:4px;}
+  .tx-info .cat{font-size:14.5px;}
+  .hero-sub{font-size:13px; opacity:.92; margin-top:-6px;}
+  .cur-btn{background:none; border:none; cursor:pointer; display:flex; align-items:center; gap:2px; padding:0; font-family:'Fraunces',serif; font-size:28px; color:var(--muted);}
+  .cur-btn small{font-family:'IBM Plex Sans Thai',sans-serif; font-size:11px; color:var(--brand-dark); font-weight:600;}
+  .trip-card{background:#fff; border:1.5px solid var(--brand); border-radius:16px; padding:14px 16px; margin-bottom:16px; display:flex; gap:12px; align-items:center;}
+  .trip-card .txt{flex:1; font-size:13.5px; line-height:1.45;}
+  .trip-card .txt b{display:block; font-size:14.5px; color:var(--ink); margin-bottom:2px;}
+  .trip-card .btn{padding:9px 14px; font-size:13px; white-space:nowrap;}
+  .home-payers{background:#fff; border:1px solid var(--border); border-radius:16px; padding:12px 16px 10px; margin-bottom:16px;}
+  .join-link{margin-top:12px; background:none; border:none; color:var(--brand-dark); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; padding:8px;}
+  .narrow-form{width:100%; max-width:320px;}
+  .tx-info .sub{font-size:12px; color:var(--muted); margin-top:2px;}
+  .tx-info .who{display:inline-block; background:var(--brand-light); color:var(--brand-dark); font-weight:600; border-radius:8px; padding:0 6px; margin-left:2px;}
+  .payer-head{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-weight:600; padding-bottom:4px; border-bottom:1px solid var(--border);}
+  .type-seg{display:inline-flex; background:rgba(255,255,255,.18); border-radius:18px; padding:3px; margin-bottom:4px;}
+  .type-seg button{border:none; background:none; color:#fff; font-weight:600; font-size:13px; padding:6px 14px; border-radius:15px; cursor:pointer; font-family:inherit; opacity:.85;}
+  .type-seg button.active{background:#fff; color:var(--brand-dark); opacity:1;}
+  .bd-items{margin-top:8px; display:flex; flex-direction:column; gap:5px;}
+  .bd-item{display:flex; justify-content:space-between; gap:10px; font-size:12.5px; color:var(--text); cursor:pointer;}
+  .bd-item .l{min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .bd-item .l small{color:var(--muted);}
+  .bd-item .r{font-family:'Fraunces',serif; font-weight:600; white-space:nowrap;}
+  /* Share image card (rendered off-screen) */
+  .receipt{width:420px; background:#fff; color:#1E2A32; font-family:'IBM Plex Sans Thai',sans-serif; padding:0 0 18px;}
+  .receipt .r-head{background:linear-gradient(140deg,#20C4C4,#149A9D); color:#fff; padding:22px 24px 20px;}
+  .receipt .r-title{font-size:15px; font-weight:600; opacity:.95;}
+  .receipt .r-period{font-size:13px; opacity:.85; margin-top:2px;}
+  .receipt .r-total{font-family:'Fraunces',serif; font-size:34px; font-weight:600; margin-top:10px;}
+  .receipt .r-count{font-size:12.5px; opacity:.9;}
+  .receipt .r-sec{padding:14px 24px 4px; font-size:12px; font-weight:700; color:#8A97A0; letter-spacing:.3px;}
+  .receipt .r-row{display:flex; justify-content:space-between; gap:12px; padding:9px 24px; border-bottom:1px dashed #E7EEF0; font-size:14px;}
+  .receipt .r-row .l b{font-weight:600;}
+  .receipt .r-row .l small{display:block; color:#8A97A0; font-size:12px; margin-top:1px;}
+  .receipt .r-row .r{font-family:'Fraunces',serif; font-weight:600; white-space:nowrap;}
+  .receipt .r-foot{text-align:center; font-size:11px; color:#8A97A0; margin-top:14px;}
   .sync-chip{display:inline-flex; align-items:center; gap:5px; margin-top:6px; margin-left:6px; font-size:12px; font-weight:600; color:var(--brand-dark); background:var(--brand-light); border:none; border-radius:14px; padding:5px 10px; cursor:pointer; font-family:inherit;}
   .sync-chip.err{background:#FDEAEA; color:var(--danger);}
   .sync-code{font-family:'Fraunces',serif; font-size:24px; font-weight:600; letter-spacing:2px; text-align:center; background:var(--paper); border-radius:12px; padding:14px; margin:6px 0 10px; color:var(--ink); user-select:all;}
@@ -430,6 +465,7 @@
       <p style="color:var(--muted); margin-bottom:22px; font-size:14px;">เลือกโปรไฟล์ของคุณ — ข้อมูลแต่ละคนแยกเก็บกันในเครื่องนี้</p>
       <div class="profile-list" id="profileList"></div>
       <button class="btn block" style="max-width:360px;" onclick="showCreateProfile()">+ สร้างโปรไฟล์ใหม่</button>
+      <button class="join-link" onclick="showScreen('screen-joinprofile')">🔗 เคยใช้ในเครื่องอื่นแล้ว? ดึงข้อมูลมาใช้ต่อ</button>
     </div>
   </div>
 
@@ -445,9 +481,29 @@
         <label>ตั้งรหัส PIN 4 หลัก</label>
         <input type="password" id="newProfilePin" inputmode="numeric" maxlength="4" placeholder="••••">
       </div>
+      <div class="field" style="width:100%; max-width:320px;">
+        <label>ใช้เงินสกุลไหน (เปลี่ยนทีหลังได้)</label>
+        <select id="newProfileCurrency"></select>
+      </div>
       <div class="row-gap" style="width:100%; max-width:320px;">
         <button class="btn secondary block" onclick="showScreen('screen-profiles')">ยกเลิก</button>
         <button class="btn block" onclick="createProfile()">สร้าง</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN: Join from another device -->
+  <div class="screen" id="screen-joinprofile">
+    <div class="center-screen">
+      <h2 style="margin-bottom:6px;">ใช้ข้อมูลจากเครื่องอื่น</h2>
+      <p style="color:var(--muted); font-size:13px; margin-bottom:18px; max-width:320px;">ใส่รหัสกลุ่มและรหัสผ่านที่ตั้งไว้ในเครื่องแรก ข้อมูลทั้งหมดจะถูกดึงมาที่เครื่องนี้</p>
+      <div class="field narrow-form"><label>ชื่อของคุณ</label><input type="text" id="joinName" placeholder="เช่น มิว"></div>
+      <div class="field narrow-form"><label>ตั้ง PIN 4 หลักสำหรับเครื่องนี้</label><input type="password" id="joinPin" inputmode="numeric" maxlength="4" placeholder="••••"></div>
+      <div class="field narrow-form"><label>รหัสกลุ่ม</label><input type="text" id="joinCode" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off"></div>
+      <div class="field narrow-form"><label>รหัสผ่านของกลุ่ม</label><input type="password" id="joinPass" autocomplete="current-password"></div>
+      <div class="row-gap narrow-form">
+        <button class="btn secondary block" onclick="showScreen('screen-profiles')">ยกเลิก</button>
+        <button class="btn block" id="joinGo" onclick="joinFromOtherDevice()">เชื่อมต่อ</button>
       </div>
     </div>
   </div>
@@ -490,32 +546,27 @@
       <div class="dash-grid">
         <div class="dash-left">
           <button class="hero" id="balancePill" onclick="navTo('screen-chart')">
-            <div class="hero-label">คงเหลือเดือนนี้</div>
+            <div class="hero-label">ใช้จ่ายไปแล้วเดือนนี้</div>
             <div class="hero-amt" id="balanceAmt">฿0</div>
-            <div class="hero-row">
+            <div class="hero-sub" id="heroSub"></div>
+            <div class="hero-row" id="heroRow">
               <div class="hero-stat"><small>▲ รายรับ</small><b id="incomeAmt">฿0</b></div>
               <div class="hero-stat"><small>▼ รายจ่าย</small><b id="expenseAmt">฿0</b></div>
             </div>
-            <div class="hero-link">ดูสรุปยอดและกราฟ ›</div>
+            <div class="hero-link">ดูสรุปยอด แชร์ และหารเงิน ›</div>
           </button>
           <button class="btn block cta-add" onclick="openAddForm()">+ บันทึกรายการ</button>
 
           <div id="promoCard"></div>
 
           <div id="homeExtras">
-            <details class="fold" id="foldPayers" data-fold>
-              <summary>👥 ใครจ่ายเท่าไหร่<span class="fold-meta" id="payerFoldMeta"></span></summary>
-              <div class="fold-body">
-                <div id="payerSummaryCard"></div>
-                <button class="fold-link" onclick="openPayerModal()">แก้ไขชื่อผู้จ่าย ›</button>
-              </div>
-            </details>
-            <details class="fold" id="foldCats" data-fold>
-              <summary>🏷️ แยกตามหมวดหมู่<span class="fold-meta">เดือนนี้</span></summary>
-              <div class="fold-body">
-                <div class="category-grid" id="categoryGrid"></div>
-              </div>
-            </details>
+            <div class="section-head">
+              <h3>ใครจ่ายไปเท่าไหร่</h3>
+              <a href="#" onclick="openTripModal(); return false;">แก้ชื่อ</a>
+            </div>
+            <div class="home-payers"><div id="payerSummaryCard"></div></div>
+            <span id="payerFoldMeta" hidden></span>
+            <div id="categoryGrid" hidden></div>
           </div>
         </div>
         <div class="dash-right">
@@ -564,7 +615,7 @@
         <button id="toggleIncome" class="income" onclick="setFormType('INCOME')">รายรับ</button>
       </div>
       <div class="amount-wrap">
-        <span class="cur" id="formCurSym">฿</span>
+        <button class="cur-btn" type="button" onclick="openCurModal()" title="เปลี่ยนสกุลเงิน"><span id="formCurSym">฿</span><small>▾</small></button>
         <input type="number" id="formAmount" class="amount-input" inputmode="decimal" placeholder="0">
       </div>
       <div class="field">
@@ -603,7 +654,8 @@
       </div>
       <div class="stats-figures">
         <div>
-          <div class="stats-label" onclick="toggleStatsCatType()" id="statsHeading">รายจ่ายรวม ▾</div>
+          <div class="type-seg" id="statsTypeSeg"><button data-t="EXPENSE" class="active" onclick="setStatsType('EXPENSE')">รายจ่าย</button><button data-t="INCOME" onclick="setStatsType('INCOME')">รายรับ</button></div>
+          <div class="stats-label" id="statsHeading" style="display:none;"></div>
           <div class="stats-amount numeral" id="statsTotal">฿0</div>
         </div>
         <div class="stats-catcount" id="statsCatCount">0 หมวดหมู่</div>
@@ -777,6 +829,30 @@
     <div class="modal-sheet" id="syncSheet"></div>
   </div>
 
+  <!-- Modal: currency picker -->
+  <div class="modal-overlay" id="curModal">
+    <div class="modal-sheet">
+      <h3>ใช้เงินสกุลไหน</h3>
+      <p style="font-size:12.5px; color:var(--muted);">เปลี่ยนสัญลักษณ์เงินของทั้งโปรไฟล์ ไม่ได้แปลงค่าเงิน</p>
+      <div class="set-group sheet-list" id="curList"></div>
+      <button class="btn secondary block" onclick="document.getElementById('curModal').classList.remove('active')">ปิด</button>
+    </div>
+  </div>
+
+  <!-- Modal: trip companions -->
+  <div class="modal-overlay" id="tripModal">
+    <div class="modal-sheet">
+      <h3>ไปกับใครบ้าง?</h3>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6;">พิมพ์ชื่อทุกคนที่จะหารเงินด้วยกัน <b>รวมตัวคุณเองด้วย</b> คั่นด้วยเว้นวรรค ตอนบันทึกรายการจะได้กดเลือกได้ว่าใครจ่าย</p>
+      <div class="field"><textarea id="tripNames" rows="2" placeholder="เช่น มิว แพร ฝน จูน ปุ๊ก บีม"></textarea></div>
+      <div class="row-gap">
+        <button class="btn secondary block" onclick="closeTripModal(true)">ข้ามไปก่อน</button>
+        <button class="btn block" onclick="saveTripNames()">บันทึกชื่อ</button>
+      </div>
+      <button class="fold-link" style="margin-top:12px;" onclick="closeTripModal(false); openPayerModal();">แก้ทีละชื่อ / ลบชื่อ ›</button>
+    </div>
+  </div>
+
   <!-- Modal: share sheet -->
   <div class="modal-overlay" id="shareModal">
     <div class="modal-sheet">
@@ -784,7 +860,7 @@
       <p style="font-size:12.5px; color:var(--muted);">ส่งสรุปของช่วงที่กำลังดูไปยัง LINE หรือแอปอื่น</p>
       <div class="set-group sheet-list">
         <button class="set-row" onclick="closeShareSheet(); shareAsText();"><span class="set-ic">📝</span><span class="set-lbl">เป็นข้อความ<small>อ่านง่าย มีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
-        <button class="set-row" onclick="closeShareSheet(); shareAsImage();"><span class="set-ic">🖼️</span><span class="set-lbl">เป็นรูปภาพ<small>ภาพหน้าสรุปแนวตั้ง</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="closeShareSheet(); shareAsImage();"><span class="set-ic">🖼️</span><span class="set-lbl">เป็นรูปภาพ<small>ใบสรุปมีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
       </div>
       <button class="btn secondary block" onclick="closeShareSheet()">ยกเลิก</button>
     </div>
@@ -820,10 +896,10 @@
    per profile: "expapp_data_<id>" -> {transactions:[], categories:[]}
    ============================================================ */
 const DEFAULT_CATS = {
-  EXPENSE: ["อาหาร","เดินทาง","ช้อปปิ้ง","บิล/ค่าใช้จ่ายประจำ","บันเทิง","สุขภาพ","อื่นๆ"],
+  EXPENSE: ["อาหาร","เดินทาง","ที่พัก","ท่องเที่ยว/ตั๋ว","ช้อปปิ้ง","บิล/ค่าใช้จ่ายประจำ","บันเทิง","สุขภาพ","อื่นๆ"],
   INCOME: ["เงินเดือน","โบนัส","ฟรีแลนซ์","ของขวัญ","อื่นๆ"]
 };
-const CAT_ICONS = {"อาหาร":"🍜","เดินทาง":"🚗","ช้อปปิ้ง":"🛍️","บิล/ค่าใช้จ่ายประจำ":"🧾","บันเทิง":"🎬","สุขภาพ":"💊","เงินเดือน":"💵","โบนัส":"🎁","ฟรีแลนซ์":"💻","ของขวัญ":"🎉","อื่นๆ":"📦"};
+const CAT_ICONS = {"อาหาร":"🍜","เดินทาง":"🚗","ที่พัก":"🏨","ท่องเที่ยว/ตั๋ว":"🎟️","ช้อปปิ้ง":"🛍️","บิล/ค่าใช้จ่ายประจำ":"🧾","บันเทิง":"🎬","สุขภาพ":"💊","เงินเดือน":"💵","โบนัส":"🎁","ฟรีแลนซ์":"💻","ของขวัญ":"🎉","อื่นๆ":"📦"};
 const DEFAULT_PAYERS = ["A","B","C","D"];
 const THAI_MONTHS = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 const THAI_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
@@ -943,6 +1019,7 @@ function renderProfileList(){
 function showCreateProfile(){
   document.getElementById("newProfileName").value = "";
   document.getElementById("newProfilePin").value = "";
+  document.getElementById("newProfileCurrency").value = "THB";
   showScreen("screen-createprofile");
 }
 function createProfile(){
@@ -953,7 +1030,8 @@ function createProfile(){
   const p = { id: uid(), name, pin };
   profiles.push(p);
   saveProfiles();
-  const data = { transactions: [], categories: { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] }, currency: "THB", payers: [...DEFAULT_PAYERS] };
+  const cur = document.getElementById("newProfileCurrency").value || "THB";
+  const data = { transactions: [], categories: { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] }, currency: cur, payers: [...DEFAULT_PAYERS] };
   localStorage.setItem("expapp_data_" + p.id, JSON.stringify(data));
   toast("สร้างโปรไฟล์สำเร็จ");
   renderProfileList();
@@ -1020,6 +1098,18 @@ function login(p){
   if(!currentData.categories) currentData.categories = { EXPENSE: [...DEFAULT_CATS.EXPENSE], INCOME: [...DEFAULT_CATS.INCOME] };
   if(!currentData.currency) currentData.currency = "THB";
   if(!Array.isArray(currentData.payers)) currentData.payers = [...DEFAULT_PAYERS];
+  if(!currentData.catsV2){
+    const exp = currentData.categories.EXPENSE || (currentData.categories.EXPENSE = []);
+    const deleted = ((currentData.setLog || {}).cat_EXPENSE) || {};
+    ["ที่พัก","ท่องเที่ยว/ตั๋ว"].forEach((n, i) => {
+      if(!exp.includes(n) && !(deleted[n] && deleted[n].d > (deleted[n].a || 0))){
+        const at = exp.indexOf("เดินทาง");
+        exp.splice(at >= 0 ? at + 1 + i : exp.length, 0, n);
+      }
+    });
+    currentData.catsV2 = true;
+    localStorage.setItem("expapp_data_" + p.id, JSON.stringify(currentData));
+  }
   document.getElementById("bottomnav").style.display = "flex";
   document.getElementById("fabBtn").style.display = "flex";
   document.getElementById("app").classList.add("logged-in");
@@ -1099,10 +1189,25 @@ function renderDashboard(){
   const expense = monthTx.filter(t=>t.type==="EXPENSE").reduce((s,t)=>s+t.amount,0);
   document.getElementById("incomeAmt").textContent = fmtMoney(income);
   document.getElementById("expenseAmt").textContent = fmtMoney(expense);
-  document.getElementById("balanceAmt").textContent = fmtMoney(income - expense);
+  // Spending-only users should not see a confusing negative "balance" or the same total twice
+  const label = document.querySelector("#balancePill .hero-label");
+  const expCount = monthTx.filter(t => t.type === "EXPENSE").length;
+  document.getElementById("heroRow").style.display = income === 0 ? "none" : "flex";
+  document.getElementById("heroSub").style.display = income === 0 ? "block" : "none";
+  document.getElementById("heroSub").textContent = expCount ? expCount + " รายการ" : "ยังไม่มีรายการเดือนนี้";
+  if(income === 0){
+    label.textContent = "ใช้จ่ายไปแล้วเดือนนี้";
+    document.getElementById("balanceAmt").textContent = fmtMoney(expense);
+  } else if(income - expense < 0){
+    label.textContent = "ใช้เกินรายรับเดือนนี้";
+    document.getElementById("balanceAmt").textContent = fmtMoney(expense - income);
+  } else {
+    label.textContent = "เหลือเงินเดือนนี้";
+    document.getElementById("balanceAmt").textContent = fmtMoney(income - expense);
+  }
 
   renderPromoCard(hasAnyTx);
-  document.getElementById("homeExtras").style.display = hasAnyTx ? "block" : "none";
+  document.getElementById("homeExtras").style.display = monthTx.some(t => t.type === "EXPENSE") ? "block" : "none";
   renderCategoryGrid(monthTx);
   renderPayerSummary(monthTx);
 
@@ -1115,18 +1220,27 @@ function renderDashboard(){
   }
   list.forEach(t => container.appendChild(txItemEl(t)));
 }
+function payersAreDefault(){ return currentData.payers.length === DEFAULT_PAYERS.length && DEFAULT_PAYERS.every((n,i) => currentData.payers[i] === n); }
 function renderPromoCard(hasAnyTx){
   const el = document.getElementById("promoCard");
-  if(hasAnyTx){ el.innerHTML = ""; return; }
-  el.innerHTML = `
-    <div class="guide">
-      <h4>👋 เริ่มใช้งานง่ายๆ 3 ขั้นตอน</h4>
-      <ol>
-        <li>กดปุ่ม <b>+ บันทึกรายการ</b></li>
-        <li>ใส่จำนวนเงิน เลือกหมวดหมู่ แล้วกด <b>บันทึก</b></li>
-        <li>ยอดคงเหลือคำนวณให้อัตโนมัติ กดการ์ดสีฟ้าเพื่อดูสรุปและแชร์</li>
-      </ol>
-    </div>`;
+  const tripPrompt = payersAreDefault() && !currentData.tripPromptDismissed;
+  if(!hasAnyTx){
+    el.innerHTML = `
+      <div class="guide">
+        <h4>👋 เริ่มใช้งานง่ายๆ</h4>
+        <ol>
+          ${tripPrompt ? `<li><span>ไปกับเพื่อน? <a href="#" onclick="openTripModal(); return false;" style="color:var(--brand-dark); font-weight:700;">ใส่ชื่อเพื่อนก่อน</a> จะได้หารเงินง่าย (ไม่ใส่ก็ได้)</span></li>` : ""}
+          <li><span>กดปุ่ม <b>+ บันทึกรายการ</b> ใส่จำนวนเงิน เลือกหมวดหมู่ แล้วกดบันทึก</span></li>
+          <li><span>ยอดรวมขึ้นที่การ์ดสีฟ้า กดการ์ดเพื่อดูสรุป แชร์ และหารเงิน</span></li>
+        </ol>
+      </div>`;
+    return;
+  }
+  el.innerHTML = tripPrompt ? `
+    <div class="trip-card">
+      <div class="txt"><b>👥 ยังใช้ชื่อ A B C D อยู่</b>ใส่ชื่อเพื่อนจริงจะดูง่ายกว่า</div>
+      <button class="btn" onclick="openTripModal()">ใส่ชื่อ</button>
+    </div>` : "";
 }
 function renderCategoryGrid(monthTx){
   const container = document.getElementById("categoryGrid");
@@ -1142,16 +1256,30 @@ function renderCategoryGrid(monthTx){
     container.appendChild(el);
   });
 }
+function friendlyDate(ms){
+  const d = new Date(ms), today = new Date(); today.setHours(0,0,0,0);
+  const day = new Date(d); day.setHours(0,0,0,0);
+  const diff = Math.round((today - day) / 86400000);
+  if(diff === 0) return "วันนี้";
+  if(diff === 1) return "เมื่อวาน";
+  const opts = { day:'numeric', month:'short' };
+  if(d.getFullYear() !== today.getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString('th-TH', opts);
+}
 function txItemEl(t){
   const div = document.createElement("div");
   div.className = "tx-item";
   const icon = CAT_ICONS[t.category] || "📦";
+  // Title is what the person typed (e.g. "ข้าวมันไก่"); the category becomes the detail line
+  const title = t.note || t.category;
+  const sub = [t.note ? t.category : "", friendlyDate(t.date)].filter(Boolean).join(" · ");
+  const who = t.payer ? ` · <span class="who">${escapeHtml(t.payer)} จ่าย</span>` : "";
   div.innerHTML = `
     <div class="tx-left">
       <div class="tx-icon ${t.type==='INCOME'?'income':'expense'}">${icon}</div>
       <div class="tx-info">
-        <div class="cat">${escapeHtml(t.category)}</div>
-        <div class="note">${new Date(t.date).toLocaleDateString('th-TH')}${t.note ? ' · ' + escapeHtml(t.note) : ''}${t.payer ? ' · 👤 ' + escapeHtml(t.payer) : ''}</div>
+        <div class="cat">${escapeHtml(title)}</div>
+        <div class="sub">${escapeHtml(sub)}${who}</div>
       </div>
     </div>
     <div class="tx-amt ${t.type==='INCOME'?'income':'expense'}">${t.type==='INCOME'?'+':'-'}${fmtMoney(t.amount)}</div>
@@ -1359,6 +1487,22 @@ async function decryptBlob(cfg, blob){
   return JSON.parse(new TextDecoder().decode(data));
 }
 
+// Add/remove log per list ("payers", "cat_EXPENSE", "cat_INCOME") so devices merge names instead of overwriting.
+function listLog(key){ currentData.setLog = currentData.setLog || {}; return (currentData.setLog[key] = currentData.setLog[key] || {}); }
+function logAdd(key, name){ const l = listLog(key); l[name] = { a: Date.now(), d: (l[name] && l[name].d) || 0 }; }
+function logDel(key, name){ const l = listLog(key); l[name] = { a: (l[name] && l[name].a) || 0, d: Date.now() }; }
+function mergeList(localList, remoteList, localLog, remoteLog){
+  const log = {};
+  [remoteLog || {}, localLog || {}].forEach(m => Object.entries(m).forEach(([n,v]) => {
+    const cur = log[n] || { a:0, d:0 };
+    log[n] = { a: Math.max(cur.a, v.a || 0), d: Math.max(cur.d, v.d || 0) };
+  }));
+  // Shared order comes from the group copy; names only this device has go at the end
+  const names = [...(remoteList || [])];
+  (localList || []).forEach(n => { if(!names.includes(n)) names.push(n); });
+  Object.entries(log).forEach(([n,v]) => { if(v.a > v.d && !names.includes(n)) names.push(n); });
+  return { list: names.filter(n => !log[n] || log[n].a >= log[n].d), log };
+}
 function markDeleted(ids){
   if(!currentData.deletedIds) currentData.deletedIds = {};
   const now = Date.now();
@@ -1366,7 +1510,7 @@ function markDeleted(ids){
 }
 function syncPayload(d){
   return { transactions: d.transactions || [], deletedIds: d.deletedIds || {}, categories: d.categories, payers: d.payers,
-           currency: d.currency, settingsUpdatedAt: d.settingsUpdatedAt || 0 };
+           currency: d.currency, settingsUpdatedAt: d.settingsUpdatedAt || 0, setLog: d.setLog || {} };
 }
 // Newest edit wins per transaction; deletions travel as tombstones; settings follow the newest change.
 function mergeData(local, remote){
@@ -1380,9 +1524,17 @@ function mergeData(local, remote){
   const txs = Object.values(map).filter(t => !(del[t.id] && del[t.id] >= (t.updatedAt || t.createdAt || 0)));
   const ls = local.settingsUpdatedAt || 0, rs = remote.settingsUpdatedAt || 0;
   const s = rs > ls ? remote : local;
+  const lLog = local.setLog || {}, rLog = remote.setLog || {}, setLog = {};
+  const payers = mergeList(local.payers, remote.payers, lLog.payers, rLog.payers); setLog.payers = payers.log;
+  const categories = {};
+  ["EXPENSE","INCOME"].forEach(k => {
+    const m = mergeList((local.categories||{})[k], (remote.categories||{})[k], lLog["cat_"+k], rLog["cat_"+k]);
+    categories[k] = m.list; setLog["cat_"+k] = m.log;
+  });
   return Object.assign({}, local, {
     transactions: txs, deletedIds: del,
-    categories: s.categories || local.categories, payers: s.payers || local.payers, currency: s.currency || local.currency,
+    categories, payers: payers.list, setLog,
+    currency: s.currency || local.currency,
     settingsUpdatedAt: Math.max(ls, rs)
   });
 }
@@ -1604,6 +1756,89 @@ function shareSyncCode(){
   else if(navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast("คัดลอกแล้ว")).catch(() => toast("คัดลอกไม่สำเร็จ"));
 }
 
+/* ---------- Trip companions ---------- */
+function openTripModal(){
+  document.getElementById("tripNames").value = payersAreDefault() ? "" : currentData.payers.join(" ");
+  document.getElementById("tripModal").classList.add("active");
+  setTimeout(() => { try{ document.getElementById("tripNames").focus(); }catch(e){} }, 150);
+}
+function closeTripModal(dismiss){
+  if(dismiss){ currentData.tripPromptDismissed = true; saveData({ noSync:true }); }
+  document.getElementById("tripModal").classList.remove("active");
+  refreshAll();
+}
+function saveTripNames(){
+  const names = [...new Set(document.getElementById("tripNames").value.split(/[\s,，、]+/).map(s => s.trim()).filter(Boolean))];
+  if(!names.length){ toast("พิมพ์ชื่ออย่างน้อย 1 ชื่อ"); return; }
+  const old = [...currentData.payers];
+  // Names already on transactions follow their new name in the same position (A -> first name, B -> second...)
+  const rename = {};
+  old.forEach((o,i) => { if(names[i] && o !== names[i]) rename[o] = names[i]; });
+  currentData.transactions.forEach(t => { if(t.payer && rename[t.payer]){ t.payer = rename[t.payer]; t.updatedAt = Date.now(); } });
+  old.filter(o => !names.includes(o)).forEach(o => logDel("payers", o));
+  names.filter(n => !old.includes(n)).forEach(n => logAdd("payers", n));
+  currentData.payers = names;
+  currentData.tripPromptDismissed = true;
+  saveData();
+  document.getElementById("tripModal").classList.remove("active");
+  toast("บันทึกชื่อ " + names.length + " คนแล้ว");
+  refreshAll();
+  if(document.getElementById("screen-form").classList.contains("active")) renderFormPayers();
+}
+
+/* ---------- Currency picker (from the entry form) ---------- */
+function fillCurrencyOptions(sel){
+  sel.innerHTML = Object.entries(CURRENCIES).map(([k,v]) => `<option value="${k}">${v.symbol} ${v.label}</option>`).join("");
+}
+function openCurModal(){
+  const list = document.getElementById("curList");
+  list.innerHTML = Object.entries(CURRENCIES).map(([k,v]) => `
+    <button class="set-row" onclick="pickCurrency('${k}')"><span class="set-ic">${v.symbol}</span><span class="set-lbl">${v.label}</span>${k === currentData.currency ? '<span style="color:var(--brand-dark); font-weight:700;">✓</span>' : ''}</button>`).join("");
+  document.getElementById("curModal").classList.add("active");
+}
+function pickCurrency(k){
+  document.getElementById("currencySelect").value = k;
+  changeCurrency();
+  setFormCurrency();
+  document.getElementById("curModal").classList.remove("active");
+}
+
+/* ---------- Join from another device (profile screen) ---------- */
+async function joinFromOtherDevice(){
+  const name = document.getElementById("joinName").value.trim();
+  const pin = document.getElementById("joinPin").value.trim();
+  const code = normCode(document.getElementById("joinCode").value);
+  const pass = document.getElementById("joinPass").value;
+  if(!name){ toast("กรุณาใส่ชื่อ"); return; }
+  if(!/^\d{4}$/.test(pin)){ toast("PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
+  if(code.length !== 12){ toast("รหัสกลุ่มต้องมี 12 ตัว เช่น ABCD-EFGH-JKMN"); return; }
+  if(!pass){ toast("กรุณาใส่รหัสผ่านของกลุ่ม"); return; }
+  if(!syncUrl()){ toast("ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ซิงค์"); return; }
+  const btn = document.getElementById("joinGo"); btn.disabled = true; btn.textContent = "กำลังเชื่อมต่อ...";
+  try{
+    const cfg = await deriveSyncKeys(code, pass);
+    const probe = await syncApi({ action:"pull", id:cfg.id, auth:cfg.auth });
+    if(!probe.ok) throw new Error(probe.error);
+    if(!probe.exists) throw new Error("not_found");
+    const remote = await decryptBlob(cfg, probe.blob); // verifies the password before creating anything
+    const p = { id: uid(), name, pin };
+    profiles.push(p); saveProfiles();
+    const data = { transactions: [], categories: remote.categories || { EXPENSE:[...DEFAULT_CATS.EXPENSE], INCOME:[...DEFAULT_CATS.INCOME] },
+                   currency: remote.currency || "THB", payers: remote.payers || [...DEFAULT_PAYERS], tripPromptDismissed: true };
+    localStorage.setItem("expapp_data_" + p.id, JSON.stringify(data));
+    currentProfile = p; cfg.lastSync = 0; saveSyncCfg(cfg);
+    ["joinName","joinPin","joinCode","joinPass"].forEach(id => document.getElementById(id).value = "");
+    login(p);
+    toast("เชื่อมต่อแล้ว กำลังดึงข้อมูล...");
+  }catch(e){
+    const m = String(e && e.message || e);
+    toast(m === "auth" || m === "OperationError" ? "รหัสผ่านไม่ถูกต้อง" : m === "not_found" ? "ไม่พบกลุ่มนี้ ตรวจสอบรหัสกลุ่มอีกครั้ง" : "เชื่อมต่อไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต");
+  }finally{ btn.disabled = false; btn.textContent = "เชื่อมต่อ"; }
+}
+
+// Keep devices in step while the app stays open
+setInterval(() => { if(currentProfile && document.visibilityState === "visible" && getSync()) syncNow(); }, 60000);
+
 /* ---------- UI helpers ---------- */
 function openShareSheet(){ document.getElementById("shareModal").classList.add("active"); }
 function closeShareSheet(){ document.getElementById("shareModal").classList.remove("active"); }
@@ -1628,7 +1863,8 @@ let formPayer = "";
 function renderFormPayers(){
   const wrap = document.getElementById("formPayers");
   wrap.innerHTML = "";
-  ["", ...currentData.payers].forEach(name => {
+  const used = currentData.transactions.map(t => t.payer).filter(n => n && !currentData.payers.includes(n));
+  ["", ...currentData.payers, ...new Set(used)].forEach(name => {
     const chip = document.createElement("span");
     chip.className = "cat-chip" + (name === formPayer ? " selected" : "");
     chip.textContent = name ? "👤 " + name : "ไม่ระบุ";
@@ -1641,7 +1877,7 @@ function renderFormPayers(){
   add.onclick = () => {
     const n = (prompt("ชื่อเล่นผู้จ่าย") || "").trim();
     if(!n) return;
-    if(!currentData.payers.includes(n)){ currentData.payers.push(n); saveData(); }
+    if(!currentData.payers.includes(n)){ currentData.payers.push(n); logAdd("payers", n); saveData(); }
     formPayer = n; renderFormPayers();
   };
   wrap.appendChild(add);
@@ -1653,15 +1889,15 @@ function renderPayerSummary(monthTx){
   const pt = payerTotals(exp);
   const total = exp.reduce((s,t)=>s+t.amount,0);
   document.getElementById("payerFoldMeta").textContent = total ? fmtMoney(total) : "";
-  const rows = currentData.payers.filter(n => pt[n]).map(n => [n, pt[n]]);
+  const rows = Object.keys(pt).filter(n => n).map(n => [n, pt[n]]);
   if(pt[""]) rows.push(["ไม่ระบุ", pt[""]]);
   if(!rows.length){
     card.innerHTML = `<div style="font-size:13px; color:var(--muted); padding:4px 0;">ยังไม่มีรายจ่ายเดือนนี้ เลือก "ผู้จ่าย" ตอนบันทึกรายการ แล้วยอดจะขึ้นที่นี่</div>`;
     return;
   }
-  card.innerHTML = rows.sort((a,b)=>b[1]-a[1]).map(([n,v]) => `
+  card.innerHTML = `<div class="payer-head"><span>ผู้จ่าย</span><span>จ่ายไปแล้ว</span></div>` + rows.sort((a,b)=>b[1]-a[1]).map(([n,v]) => `
     <div class="payer-row"><span class="payer-name"><span class="payer-dot">${escapeHtml(n.charAt(0).toUpperCase())}</span>${escapeHtml(n)}</span><span class="payer-amt">${fmtMoney(v)}</span></div>`).join("")
-    + `<div class="payer-total"><span>รวมรายจ่าย</span><span class="numeral">${fmtMoney(total)}</span></div>`;
+    ;
 }
 function openPayerModal(){ renderPayerManageList(); document.getElementById("payerModal").classList.add("active"); }
 function closePayerModal(){ document.getElementById("payerModal").classList.remove("active"); refreshAll(); }
@@ -1683,7 +1919,7 @@ function addPayer(){
   const n = input.value.trim();
   if(!n) return;
   if(currentData.payers.includes(n)){ toast("มีชื่อนี้แล้ว"); return; }
-  currentData.payers.push(n); saveData();
+  currentData.payers.push(n); logAdd("payers", n); saveData();
   input.value = ""; renderPayerManageList();
 }
 function renamePayer(i){
@@ -1692,6 +1928,7 @@ function renamePayer(i){
   if(!n || n === old) return;
   if(currentData.payers.includes(n)){ toast("มีชื่อนี้แล้ว"); return; }
   currentData.payers[i] = n;
+  logDel("payers", old); logAdd("payers", n);
   currentData.transactions.forEach(t => { if(t.payer === old){ t.payer = n; t.updatedAt = Date.now(); } });
   saveData(); renderPayerManageList(); toast("แก้ชื่อแล้ว รายการเก่าเปลี่ยนตาม");
 }
@@ -1701,6 +1938,7 @@ function deletePayer(i){
   const msg = used ? `ลบ "${n}"? รายการ ${used} รายการของ ${n} จะกลายเป็น "ไม่ระบุ"` : `ลบ "${n}"?`;
   if(!confirm(msg)) return;
   currentData.payers.splice(i, 1);
+  logDel("payers", n);
   currentData.transactions.forEach(t => { if(t.payer === n){ t.payer = ""; t.updatedAt = Date.now(); } });
   saveData(); renderPayerManageList();
 }
@@ -1718,7 +1956,7 @@ function splitPaidNames(txs){
   return [...new Set(txs.filter(t => t.payer).map(t => t.payer))];
 }
 function openSplitModal(){
-  splitCount = Math.max(splitPaidNames(splitTx()).length, 1);
+  splitCount = Math.max(splitPaidNames(splitTx()).length, payersAreDefault() ? 1 : currentData.payers.length, 1);
   document.getElementById("splitModal").classList.add("active");
   renderSplit();
 }
@@ -1732,18 +1970,25 @@ function changeSplitCount(d){
 }
 function computeSplit(){
   // Everyone shares the full total, including expenses with no payer recorded.
-  // Named payers get credit for what they paid; nobody is credited for "ไม่ระบุ".
   const txs = splitTx();
   const total = txs.reduce((s,t)=>s+t.amount,0);
   const unassigned = txs.filter(t => !t.payer).reduce((s,t)=>s+t.amount,0);
-  const share = splitCount ? total / splitCount : 0;
-  const payers = splitPaidNames(txs).map(n => {
+  const dec = (CURRENCIES[currentData.currency] || CURRENCIES.THB).decimals;
+  const f = Math.pow(10, dec);
+  const share = splitCount ? Math.round(total / splitCount * f) / f : 0;
+  const remainder = Math.round((total - share * splitCount) * f) / f;
+  const paidNames = splitPaidNames(txs);
+  const mk = n => {
     const items = txs.filter(t => t.payer === n);
     const paid = items.reduce((s,t)=>s+t.amount,0);
-    return { name:n, items, paid, diff: Math.round((share - paid)*100)/100 }; // >0 pay more, <0 refund
-  }).sort((a,b)=>b.paid-a.paid);
-  const others = Math.max(0, splitCount - payers.length);
-  return { total, share, payers, others, unassigned, count: splitCount, period: statsRangeLabel(lastStatsBuckets, txs) };
+    return { name:n, items, paid, diff: Math.round((share - paid) * f) / f }; // >0 pay more, <0 refund
+  };
+  const payers = paidNames.map(mk).sort((a,b)=>b.paid-a.paid);
+  // Named people from the list who haven't paid anything yet, up to the head count
+  const unpaid = [];
+  if(!payersAreDefault()) currentData.payers.forEach(n => { if(!paidNames.includes(n) && payers.length + unpaid.length < splitCount) unpaid.push(mk(n)); });
+  const others = Math.max(0, splitCount - payers.length - unpaid.length);
+  return { total, share, remainder, payers, unpaid, others, unassigned, count: splitCount, period: statsRangeLabel(lastStatsBuckets, txs) };
 }
 function payerStatus(p){
   if(p.diff > 0.005) return { text:`จ่ายเพิ่ม ${fmtMoney(p.diff)}`, color:"var(--expense)" };
@@ -1766,7 +2011,11 @@ function renderSplit(){
       h += `<div>• <b>${escapeHtml(p.name)}</b> จ่ายไปแล้ว ${fmtMoney(p.paid)} <span style="color:var(--muted);">(${escapeHtml(what)})</span><br>&nbsp;&nbsp;→ <span style="color:${st.color}; font-weight:600;">${st.text}</span></div>`;
     });
   }
+  if(r.unpaid.length){
+    h += `<h4>ยังไม่ได้ออกเงิน</h4>` + r.unpaid.map(p => `<div>• <b>${escapeHtml(p.name)}</b> → <span style="color:var(--expense); font-weight:600;">จ่าย ${fmtMoney(r.share)}</span></div>`).join("");
+  }
   if(r.others) h += `<h4>คนอื่น</h4><div>อีก ${r.others} คน จ่ายคนละ <b>${fmtMoney(r.share)}</b></div>`;
+  if(r.remainder) h += `<div style="margin-top:8px; font-size:12px; color:var(--muted);">* หารไม่ลงตัว มีเศษ ${fmtMoney(Math.abs(r.remainder))} ${r.remainder > 0 ? "ที่ยังไม่มีใครจ่าย" : "ที่เก็บเกินมา"}</div>`;
   if(r.unassigned) h += `<div style="margin-top:8px; font-size:12px; color:var(--muted);">* รวมรายจ่ายที่ไม่ระบุผู้จ่าย ${fmtMoney(r.unassigned)} ไว้ในยอดหารแล้ว ถ้าระบุผู้จ่ายภายหลัง ระบบจะคำนวณใหม่ให้</div>`;
   el.innerHTML = h;
 }
@@ -1785,9 +2034,18 @@ function buildSplitText(){
       lines.push(`• ${p.name} จ่ายไปแล้ว ${fmtMoney(p.paid)} (${what}) → ${payerStatus(p).text}`);
     });
   }
+  if(r.unpaid.length){
+    lines.push("");
+    lines.push("ยังไม่ได้ออกเงิน");
+    r.unpaid.forEach(p => lines.push(`• ${p.name} → จ่าย ${fmtMoney(r.share)}`));
+  }
   if(r.others){
     lines.push("");
     lines.push(`คนอื่นอีก ${r.others} คน จ่ายคนละ ${fmtMoney(r.share)}`);
+  }
+  if(r.remainder){
+    lines.push("");
+    lines.push(`* หารไม่ลงตัว มีเศษ ${fmtMoney(Math.abs(r.remainder))}`);
   }
   if(r.unassigned){
     lines.push("");
@@ -1811,6 +2069,11 @@ function shareSplit(){
 
 /* ---------- STATS SCREEN ---------- */
 function setStatsPeriod(p){ statsPeriod = p; statsOffset = 0; statsCustom = null; renderChart(); }
+function setStatsType(t){
+  statsCatType = t;
+  document.querySelectorAll("#statsTypeSeg button").forEach(b => b.classList.toggle("active", b.dataset.t === t));
+  renderChart();
+}
 function toggleStatsCatType(){
   statsCatType = statsCatType === "EXPENSE" ? "INCOME" : "EXPENSE";
   renderChart();
@@ -1836,7 +2099,7 @@ function getPeriodBuckets(period, offset){
     for(let i=5;i>=0;i--){
       const start = new Date(thisMonday); start.setDate(start.getDate()-7*i);
       const end = new Date(start); end.setDate(end.getDate()+7);
-      buckets.push({start:start.getTime(), end:end.getTime(), label:"W"+(6-i)});
+      buckets.push({start:start.getTime(), end:end.getTime(), label:start.toLocaleDateString('th-TH',{day:'numeric',month:'short'})});
     }
   } else if(period === "M"){
     const pivotMonthIndex = now.getMonth() + offset*6;
@@ -1849,7 +2112,7 @@ function getPeriodBuckets(period, offset){
     const pivotYear = now.getFullYear() + offset*4;
     for(let i=3;i>=0;i--){
       const y = pivotYear-i;
-      buckets.push({start:new Date(y,0,1).getTime(), end:new Date(y+1,0,1).getTime(), label:String(y+543).slice(-2)});
+      buckets.push({start:new Date(y,0,1).getTime(), end:new Date(y+1,0,1).getTime(), label:String(y+543)});
     }
   }
   return buckets;
@@ -1866,7 +2129,7 @@ function buildCustomBuckets(startMs, endMsExclusive){
     let cur = startMs, idx = 1;
     while(cur < endMsExclusive){
       const end = Math.min(cur + 7*86400000, endMsExclusive);
-      buckets.push({start:cur, end, label:"สัปดาห์ "+idx});
+      buckets.push({start:cur, end, label:new Date(cur).toLocaleDateString('th-TH',{day:'numeric',month:'short'})});
       cur = end; idx++;
     }
   } else {
@@ -1955,9 +2218,9 @@ function renderChart(){
   const rangeTx = currentData.transactions.filter(t => t.type===statsCatType && t.date>=rangeStart && t.date<rangeEnd);
   const catSet = new Set(rangeTx.map(t=>t.category));
 
-  document.getElementById("statsHeading").textContent = (statsCatType==="EXPENSE" ? "รายจ่ายรวม" : "รายรับรวม") + " ▾";
+  document.querySelectorAll("#statsTypeSeg button").forEach(b => b.classList.toggle("active", b.dataset.t === statsCatType));
   document.getElementById("statsTotal").textContent = fmtMoney(total);
-  document.getElementById("statsCatCount").textContent = catSet.size + " หมวดหมู่";
+  document.getElementById("statsCatCount").textContent = rangeTx.length + " รายการ";
   document.getElementById("breakdownHeading").textContent = "รายละเอียด" + (statsCatType==="EXPENSE" ? "รายจ่าย" : "รายรับ") + "ตามหมวดหมู่";
 
   ["D","W","M","Y"].forEach(p => document.getElementById("statsBtn"+p).classList.toggle("active", !statsCustom && p===statsPeriod));
@@ -2023,21 +2286,20 @@ function renderCategoryBreakdown(rangeTx, total){
   entries.forEach(({cat, items, sum}, i) => {
     const pct = total ? Math.round(sum/total*100) : 0;
     const color = CHART_COLORS[i % CHART_COLORS.length];
-    let noteLine = "";
-    if(items.length === 1 && (items[0].note || items[0].payer)){
-      const parts = [items[0].note, items[0].payer ? "👤 " + items[0].payer : ""].filter(Boolean);
-      noteLine = `<div class="breakdown-note">${escapeHtml(parts.join(" · "))}</div>`;
-    } else if(items.length > 1){
-      noteLine = `<div class="breakdown-note">${items.length} รายการ</div>`;
-    }
+    const sorted = [...items].sort((a,b)=>b.date-a.date);
+    const noteLine = `<div class="bd-items">` + sorted.map(t => {
+      const what = t.note || (items.length > 1 ? "ไม่มีโน้ต" : "");
+      const meta = [t.payer ? t.payer + " จ่าย" : "", friendlyDate(t.date)].filter(Boolean).join(" · ");
+      return `<div class="bd-item" onclick="openEditForm('${t.id}')"><span class="l">${escapeHtml(what)} <small>${escapeHtml(meta)}</small></span><span class="r">${fmtMoney(t.amount)}</span></div>`;
+    }).join("") + `</div>`;
     const row = document.createElement("div");
     row.className = "breakdown-item";
     row.innerHTML = `
       <div class="breakdown-icon" style="background:${color}22; color:${color};">${CAT_ICONS[cat]||"📦"}</div>
       <div class="breakdown-info">
         <div class="breakdown-top"><span class="breakdown-cat">${escapeHtml(cat)}</span><span class="breakdown-amt numeral">${fmtMoney(sum)} · ${pct}%</span></div>
-        ${noteLine}
         <div class="breakdown-bar-track"><div class="breakdown-bar-fill" style="width:${pct}%; background:${color};"></div></div>
+        ${noteLine}
       </div>`;
     container.appendChild(row);
   });
@@ -2098,42 +2360,64 @@ function shareAsText(){
     toast("เบราว์เซอร์นี้ไม่รองรับการแชร์หรือคัดลอกอัตโนมัติ");
   }
 }
+function buildReceiptEl(){
+  const total = lastStatsTotal, rangeTx = lastStatsRangeTx;
+  const typeLabel = statsCatType === "EXPENSE" ? "รายจ่าย" : "รายรับ";
+  const sorted = [...rangeTx].sort((a,b)=>a.date-b.date);
+  const multiDay = new Set(sorted.map(t => new Date(t.date).toDateString())).size > 1;
+  const el = document.createElement("div");
+  el.className = "receipt";
+  let h = `<div class="r-head">
+      <div class="r-title">📊 ${typeLabel}ของ ${escapeHtml(currentProfile ? currentProfile.name : "")}</div>
+      <div class="r-period">🗓 ${escapeHtml(statsRangeLabel(lastStatsBuckets, rangeTx))}</div>
+      <div class="r-total">${fmtMoney(total)}</div>
+      <div class="r-count">รวม ${rangeTx.length} รายการ</div>
+    </div>`;
+  if(sorted.length){
+    h += `<div class="r-sec">รายการ</div>`;
+    const max = 40;
+    sorted.slice(0, max).forEach(t => {
+      const title = t.note ? `${t.category} - ${t.note}` : t.category;
+      const meta = [t.payer ? t.payer + " จ่าย" : "", multiDay ? friendlyDate(t.date) : ""].filter(Boolean).join(" · ");
+      h += `<div class="r-row"><div class="l"><b>${CAT_ICONS[t.category] || "•"} ${escapeHtml(title)}</b>${meta ? `<small>${escapeHtml(meta)}</small>` : ""}</div><div class="r">${fmtMoney(t.amount)}</div></div>`;
+    });
+    if(sorted.length > max) h += `<div class="r-row"><div class="l"><small>…และอีก ${sorted.length - max} รายการ</small></div></div>`;
+  }
+  const pt = payerTotals(rangeTx);
+  const named = Object.entries(pt).filter(([k]) => k).sort((a,b)=>b[1]-a[1]);
+  if(named.length){
+    h += `<div class="r-sec">ใครจ่ายเท่าไหร่</div>`;
+    named.forEach(([k,v]) => { h += `<div class="r-row"><div class="l"><b>👤 ${escapeHtml(k)}</b></div><div class="r">${fmtMoney(v)}</div></div>`; });
+    if(pt[""]) h += `<div class="r-row"><div class="l">ไม่ระบุผู้จ่าย</div><div class="r">${fmtMoney(pt[""])}</div></div>`;
+  }
+  h += `<div class="r-foot">Chatawut Touchpi Expense Tracker</div>`;
+  el.innerHTML = h;
+  return el;
+}
 function shareAsImage(){
   if(typeof html2canvas === "undefined"){
     toast("กำลังโหลดตัวช่วยสร้างรูปภาพ กรุณาลองใหม่อีกครั้งในสักครู่");
     return;
   }
-  const original = document.querySelector(".stats-layout");
-  // Clone into an offscreen wrapper and force a fixed mobile width so the exported
-  // image is always a readable portrait layout, regardless of the current viewport.
-  const clone = original.cloneNode(true);
-  clone.querySelector(".share-row")?.remove();
-  clone.style.display = "block";
-  clone.style.width = "420px";
-  const heroClone = clone.querySelector(".stats-hero");
-  if(heroClone) heroClone.style.cssText += "padding:20px 20px 28px !important;";
-  const sheetClone = clone.querySelector(".stats-sheet");
-  if(sheetClone) sheetClone.style.cssText += "margin-top:-16px !important; border-radius:22px 22px 0 0 !important; padding:20px 18px 20px !important; max-height:none !important; overflow:visible !important;";
-
+  const card = buildReceiptEl();
   const wrapper = document.createElement("div");
   wrapper.style.cssText = "position:fixed; top:-10000px; left:0; width:420px; background:#fff;";
-  wrapper.appendChild(clone);
+  wrapper.appendChild(card);
   document.body.appendChild(wrapper);
-
   toast("กำลังสร้างรูปภาพ...");
-  html2canvas(clone, { backgroundColor:"#ffffff", scale:2, useCORS:true, windowWidth:420 }).then(canvas => {
+  html2canvas(card, { backgroundColor:"#ffffff", scale:2, useCORS:true, windowWidth:420 }).then(canvas => {
     document.body.removeChild(wrapper);
     canvas.toBlob(blob => {
       if(!blob){ toast("สร้างรูปภาพไม่สำเร็จ"); return; }
-      const file = new File([blob], "chatawut-touchpi-stats.png", {type:"image/png"});
+      const file = new File([blob], "expense-summary.png", {type:"image/png"});
       if(navigator.canShare && navigator.canShare({files:[file]})){
-        navigator.share({ files:[file], text: buildShareText() }).catch(()=>{});
+        navigator.share({ files:[file] }).catch(()=>{});
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "chatawut-touchpi-stats.png";
+        a.href = url; a.download = "expense-summary.png";
         a.click();
-        URL.revokeObjectURL(url);
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast("เบราว์เซอร์นี้ยังไม่รองรับการแชร์ไฟล์ ดาวน์โหลดรูปภาพให้แล้วแทน");
       }
     });
@@ -2175,6 +2459,7 @@ function addCategory(){
   if(!name) return;
   if(!currentData.categories[catModalType].includes(name)){
     currentData.categories[catModalType].push(name);
+    logAdd("cat_" + catModalType, name);
     saveData();
   }
   input.value = "";
@@ -2182,6 +2467,7 @@ function addCategory(){
 }
 function removeCategory(name){
   currentData.categories[catModalType] = currentData.categories[catModalType].filter(c => c !== name);
+  logDel("cat_" + catModalType, name);
   saveData();
   renderCatManageList();
 }
@@ -2418,6 +2704,7 @@ function confirmClearData(){
 document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && currentProfile) syncNow(); });
 window.addEventListener("online", () => { if(currentProfile) syncNow(); });
 window.onload = () => {
+  fillCurrencyOptions(document.getElementById("newProfileCurrency"));
   initUi();
   loadProfiles();
   renderProfileList();
