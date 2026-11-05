@@ -284,6 +284,112 @@
   @media (min-width:1180px){
     .dash-grid{grid-template-columns:1.5fr 1fr;}
   }
+
+  /* ================= UI v3: calmer layout ================= */
+  .fab, .onboard-arrow{display:none !important;}
+  .screen{padding-bottom:110px;}
+
+  /* Bottom nav: 4 tabs + raised center add button */
+  .bottomnav{align-items:flex-end; box-shadow:0 -4px 18px rgba(30,42,50,.05);}
+  .nav-add{flex:0 0 72px; display:flex; justify-content:center; background:none; border:none; cursor:pointer; padding:0 0 10px;}
+  .nav-add span{width:56px; height:56px; margin-top:-22px; border-radius:50%; background:var(--brand); color:#fff; font-size:30px; line-height:1; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 16px rgba(32,196,196,.45); border:4px solid #fff;}
+  .nav-add:active span{transform:scale(.95);}
+  body.task-mode .bottomnav{display:none !important;}
+  body.task-mode .screen{padding-bottom:24px;}
+
+  /* Home */
+  .home-head{display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:16px;}
+  .month-pill{display:inline-flex; align-items:center; gap:2px; margin-top:6px; background:#fff; border:1px solid var(--border); border-radius:20px; padding:2px 4px; font-size:13px; color:var(--text); font-weight:600;}
+  .month-pill button{background:none; border:none; color:var(--brand-dark); font-size:17px; width:28px; height:28px; cursor:pointer; border-radius:50%;}
+  .month-pill button:active{background:var(--brand-light);}
+  .hero{display:block; width:100%; text-align:left; border:none; cursor:pointer; color:#fff; border-radius:20px; padding:20px; margin-bottom:12px;
+        background:linear-gradient(140deg,var(--brand),#149A9D); box-shadow:0 10px 24px rgba(20,154,157,.25); font-family:inherit;}
+  .hero-label{font-size:13px; opacity:.9;}
+  .hero-amt{font-family:'Fraunces',serif; font-size:36px; font-weight:600; margin:2px 0 14px; letter-spacing:-.5px;}
+  .hero-row{display:flex; gap:10px;}
+  .hero-stat{flex:1; background:rgba(255,255,255,.16); border-radius:12px; padding:9px 12px;}
+  .hero-stat small{display:block; font-size:11.5px; opacity:.9;}
+  .hero-stat b{font-family:'Fraunces',serif; font-size:16px; font-weight:600;}
+  .hero-link{margin-top:12px; font-size:12.5px; font-weight:600; opacity:.95;}
+  .cta-add{padding:15px; font-size:16px; border-radius:14px; margin-bottom:18px; box-shadow:0 6px 16px rgba(32,196,196,.3);}
+  .guide{background:#fff; border:1px dashed var(--brand); border-radius:16px; padding:16px; margin-bottom:18px;}
+  .guide h4{font-size:14.5px; color:var(--ink); margin-bottom:10px;}
+  .guide ol{list-style:none; counter-reset:g; display:flex; flex-direction:column; gap:9px;}
+  .guide li{counter-increment:g; display:flex; gap:10px; align-items:flex-start; font-size:13.5px; line-height:1.45;}
+  .guide li::before{content:counter(g); flex-shrink:0; width:22px; height:22px; border-radius:50%; background:var(--brand-light); color:var(--brand-dark); font-weight:700; font-size:12px; display:flex; align-items:center; justify-content:center;}
+
+  /* Collapsible sections */
+  details.fold{background:#fff; border:1px solid var(--border); border-radius:16px; margin-bottom:12px; overflow:hidden;}
+  details.fold > summary{list-style:none; display:flex; align-items:center; gap:8px; padding:14px 16px; cursor:pointer; font-weight:700; font-size:14.5px; color:var(--ink); user-select:none;}
+  details.fold > summary::-webkit-details-marker{display:none;}
+  details.fold > summary::after{content:"›"; margin-left:8px; font-size:20px; color:var(--muted); transform:rotate(90deg); transition:transform .2s; line-height:1;}
+  details.fold[open] > summary::after{transform:rotate(-90deg);}
+  .fold-meta{margin-left:auto; font-weight:600; font-size:13px; color:var(--muted);}
+  .fold-body{padding:0 16px 14px;}
+  .fold-link{display:inline-block; margin-top:10px; font-size:13px; font-weight:600; color:var(--brand-dark); background:none; border:none; cursor:pointer; padding:0;}
+  .cat-tile-amt{font-size:11px; color:var(--muted); font-family:'Fraunces',serif;}
+  .category-grid{margin-bottom:0;}
+
+  /* List screen */
+  .seg{display:flex; background:#EAF0F1; border-radius:12px; padding:4px; margin:12px 0;}
+  .seg button{flex:1; padding:9px; border:none; background:none; border-radius:9px; font-weight:600; font-size:13.5px; color:var(--muted); cursor:pointer; font-family:inherit;}
+  .seg button.active{background:#fff; color:var(--ink); box-shadow:0 1px 4px rgba(0,0,0,.08);}
+  .day-head{display:flex; justify-content:space-between; font-size:12.5px; font-weight:700; color:var(--muted); margin:16px 4px 6px;}
+  .day-head:first-child{margin-top:4px;}
+  .day-card{background:#fff; border:1px solid var(--border); border-radius:14px; padding:0 14px;}
+
+  /* Entry form */
+  .form-head{display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;}
+  .form-head h2{font-size:17px;}
+  .icon-btn.danger{color:var(--danger);}
+  .amount-wrap{display:flex; align-items:center; gap:6px; background:#fff; border:1.5px solid var(--border); border-radius:16px; padding:6px 16px; margin-bottom:18px;}
+  .amount-wrap:focus-within{border-color:var(--brand);}
+  .amount-wrap .cur{font-family:'Fraunces',serif; font-size:28px; color:var(--muted);}
+  .amount-input{border:none !important; padding:8px 0 !important; font-family:'Fraunces',serif !important; font-size:34px !important; font-weight:600; background:transparent !important; outline:none !important;}
+  .form-sticky{position:sticky; bottom:0; padding:14px 0 calc(10px + env(safe-area-inset-bottom)); background:linear-gradient(transparent, var(--paper) 30%); margin-top:6px;}
+  .form-sticky .btn{padding:15px; font-size:16px; border-radius:14px;}
+
+  /* Stats */
+  .stats-topbar{justify-content:center;}
+  .range-chip{background:rgba(255,255,255,.2); border:none; color:#fff; font-size:12px; font-weight:600; padding:6px 11px; border-radius:16px; cursor:pointer; white-space:nowrap; font-family:inherit;}
+  .share-row .act{flex:1; display:flex; align-items:center; justify-content:center; gap:6px; padding:12px 10px; border-radius:12px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit; border:1.5px solid var(--border); background:#fff; color:var(--ink);}
+  .share-row .act.primary{background:var(--brand); border-color:var(--brand); color:#fff;}
+  .share-row .act:active{transform:scale(.98);}
+
+  /* Settings */
+  .profile-card{display:flex; align-items:center; gap:12px; background:#fff; border:1px solid var(--border); border-radius:16px; padding:14px 16px; margin-bottom:6px;}
+  .set-title{font-size:12px; font-weight:700; color:var(--muted); letter-spacing:.4px; margin:20px 6px 8px;}
+  .set-group{background:#fff; border:1px solid var(--border); border-radius:16px; overflow:hidden;}
+  .set-row{display:flex; align-items:center; gap:12px; width:100%; padding:13px 16px; background:#fff; border:none; border-bottom:1px solid var(--border); font-size:14.5px; color:var(--text); text-align:left; cursor:pointer; font-family:inherit;}
+  .set-group > .set-row:last-child, .set-group > .set-note:last-child{border-bottom:none;}
+  .set-row:active{background:#F4FAFA;}
+  .set-ic{width:30px; height:30px; border-radius:9px; background:var(--brand-light); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0;}
+  .set-lbl{flex:1; min-width:0;}
+  .set-lbl small{display:block; font-size:12px; color:var(--muted); margin-top:1px;}
+  .chev{color:var(--muted); font-size:20px; line-height:1;}
+  .set-row.danger{color:var(--danger); font-weight:600;}
+  .set-row.danger .set-ic{background:#FDEAEA;}
+  .set-select{width:auto !important; border:none !important; background:transparent !important; padding:4px 0 !important; font-weight:600; color:var(--brand-dark) !important; text-align:right; cursor:pointer;}
+  .set-note{font-size:12px; color:var(--muted); line-height:1.5; padding:0 16px 12px 58px; border-bottom:1px solid var(--border); margin-top:-6px;}
+  .switch{appearance:none; -webkit-appearance:none; width:46px !important; height:28px; border-radius:16px; background:#D5DEE0; position:relative; cursor:pointer; transition:background .2s; padding:0 !important; border:none !important; flex-shrink:0;}
+  .switch::after{content:""; position:absolute; top:3px; left:3px; width:22px; height:22px; border-radius:50%; background:#fff; box-shadow:0 1px 3px rgba(0,0,0,.2); transition:transform .2s;}
+  .switch:checked{background:var(--brand);}
+  .switch:checked::after{transform:translateX(18px);}
+  details.fold.plain{background:transparent; border:none; margin-top:14px;}
+  details.fold.plain > summary{font-size:12px; color:var(--muted); padding:8px 6px;}
+  .set-foot{text-align:center; font-size:11.5px; color:var(--muted); margin-top:18px;}
+  .sheet-list{margin:6px 0 14px;}
+  .side-navbtn{flex:0 0 auto !important; margin-bottom:4px;}
+  .amount-input::-webkit-outer-spin-button, .amount-input::-webkit-inner-spin-button{-webkit-appearance:none; margin:0;}
+  .amount-input{-moz-appearance:textfield;}
+  .set-row:has(+ .set-note[style*="block"]){border-bottom:none;}
+  .set-note{margin-top:-4px;}
+  .stats-label{display:inline-flex; background:rgba(255,255,255,.18); padding:5px 12px; border-radius:16px; font-weight:600;}
+
+  @media (min-width:860px){
+    .cta-add{display:none;}
+    .hero-amt{font-size:40px;}
+  }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -297,10 +403,10 @@
         <div class="t2">EXPENSE TRACKER</div>
       </div>
     </div>
-    <button class="btn side-add-btn" onclick="openAddForm()">+ เพิ่มรายการ</button>
+    <button class="btn side-add-btn" onclick="openAddForm()">+ บันทึกรายการ</button>
     <button class="navbtn side-navbtn active" data-screen="screen-dashboard" onclick="navTo('screen-dashboard')"><span class="icon">🏠</span>หน้าหลัก</button>
     <button class="navbtn side-navbtn" data-screen="screen-list" onclick="navTo('screen-list')"><span class="icon">📋</span>รายการ</button>
-    <button class="navbtn side-navbtn" data-screen="screen-chart" onclick="navTo('screen-chart')"><span class="icon">📊</span>สถิติ</button>
+    <button class="navbtn side-navbtn" data-screen="screen-chart" onclick="navTo('screen-chart')"><span class="icon">📊</span>สรุปยอด</button>
     <button class="navbtn side-navbtn" data-screen="screen-settings" onclick="navTo('screen-settings')"><span class="icon">⚙️</span>ตั้งค่า</button>
     <div class="side-footer">
       <button class="navbtn side-navbtn" onclick="logout()"><span class="icon">👤</span>เปลี่ยนโปรไฟล์</button>
@@ -356,63 +462,58 @@
   <!-- SCREEN: Dashboard -->
   <div class="screen" id="screen-dashboard">
     <div class="screen-pad">
-      <div class="greet-row">
+      <div class="home-head">
         <div>
           <div class="greet-name" id="greetName">สวัสดี,</div>
-          <div class="greet-sub">
-            <button onclick="changeMonth(-1)">‹</button>
+          <div class="month-pill">
+            <button onclick="changeMonth(-1)" aria-label="เดือนก่อน">‹</button>
             <span id="monthLabel"></span>
-            <button onclick="changeMonth(1)">›</button>
+            <button onclick="changeMonth(1)" aria-label="เดือนถัดไป">›</button>
           </div>
         </div>
-        <div class="greet-icons">
-          <button class="summary-btn" id="balancePill" title="ยอดคงเหลือเดือนนี้" onclick="navTo('screen-chart')"><span class="emoji">💰</span>สรุปยอด</button>
-          <button class="icon-btn" onclick="logout()">👤</button>
-        </div>
-      </div>
-
-      <div class="search-row">
-        <div class="search-box">
-          <span class="sicon">🔎</span>
-          <input type="text" id="searchInput" placeholder="ค้นหารายการ หรือหมวดหมู่" oninput="handleSearch()">
-        </div>
-        <button class="filter-btn" onclick="navTo('screen-list')">🎚</button>
+        <button class="icon-btn" onclick="navTo('screen-settings')" title="ตั้งค่า">👤</button>
       </div>
 
       <div class="backup-banner" id="backupBanner" style="display:none;">
         <div class="txt" id="backupBannerText">ยังไม่ได้สำรองข้อมูลวันนี้</div>
         <button class="btn" onclick="runAutoBackup(true)">สำรองตอนนี้</button>
       </div>
+
       <div class="dash-grid">
         <div class="dash-left">
-          <div class="summary-row">
-            <div class="summary-card income">
-              <div class="label"><span class="summary-dot"></span>รายรับ</div>
-              <div class="amount numeral" id="incomeAmt">฿0</div>
+          <button class="hero" id="balancePill" onclick="navTo('screen-chart')">
+            <div class="hero-label">คงเหลือเดือนนี้</div>
+            <div class="hero-amt" id="balanceAmt">฿0</div>
+            <div class="hero-row">
+              <div class="hero-stat"><small>▲ รายรับ</small><b id="incomeAmt">฿0</b></div>
+              <div class="hero-stat"><small>▼ รายจ่าย</small><b id="expenseAmt">฿0</b></div>
             </div>
-            <div class="summary-card expense">
-              <div class="label"><span class="summary-dot"></span>รายจ่าย</div>
-              <div class="amount numeral" id="expenseAmt">฿0</div>
-            </div>
-          </div>
+            <div class="hero-link">ดูสรุปยอดและกราฟ ›</div>
+          </button>
+          <button class="btn block cta-add" onclick="openAddForm()">+ บันทึกรายการ</button>
 
-          <div class="promo-card" id="promoCard"></div>
+          <div id="promoCard"></div>
 
-          <div class="section-head">
-            <h3>หมวดหมู่ยอดนิยม</h3>
-            <a href="#" onclick="manageCategories(); return false;">จัดการ</a>
+          <div id="homeExtras">
+            <details class="fold" id="foldPayers" data-fold>
+              <summary>👥 ใครจ่ายเท่าไหร่<span class="fold-meta" id="payerFoldMeta"></span></summary>
+              <div class="fold-body">
+                <div id="payerSummaryCard"></div>
+                <button class="fold-link" onclick="openPayerModal()">แก้ไขชื่อผู้จ่าย ›</button>
+              </div>
+            </details>
+            <details class="fold" id="foldCats" data-fold>
+              <summary>🏷️ แยกตามหมวดหมู่<span class="fold-meta">เดือนนี้</span></summary>
+              <div class="fold-body">
+                <div class="category-grid" id="categoryGrid"></div>
+              </div>
+            </details>
           </div>
-          <div class="category-grid" id="categoryGrid"></div>
         </div>
         <div class="dash-right">
           <div class="section-head">
-            <h3>ใครจ่ายเท่าไหร่ (เดือนนี้)</h3>
-            <a href="#" onclick="openPayerModal(); return false;">จัดการผู้จ่าย</a>
-          </div>
-          <div class="card" id="payerSummaryCard"></div>
-          <div class="section-head">
             <h3 id="recentHeading">รายการล่าสุด</h3>
-            <a href="#" onclick="showScreen('screen-list'); return false;">ดูทั้งหมด</a>
+            <a href="#" onclick="navTo('screen-list'); return false;">ดูทั้งหมด ›</a>
           </div>
           <div class="card"><div id="recentList"></div></div>
         </div>
@@ -420,58 +521,68 @@
     </div>
   </div>
 
-  <div class="onboard-arrow" id="onboardArrow" style="display:none;">↘</div>
+  <div class="onboard-arrow" id="onboardArrow" style="display:none;"></div>
 
   <!-- SCREEN: Transaction List -->
   <div class="screen" id="screen-list">
     <div class="screen-pad content-narrow">
       <div class="topbar"><h2>รายการทั้งหมด</h2></div>
-      <div id="categoryFilterChip"></div>
-      <div class="field">
-        <select id="filterType" onchange="renderList()">
-          <option value="ALL">ทั้งหมด</option>
-          <option value="INCOME">รายรับ</option>
-          <option value="EXPENSE">รายจ่าย</option>
-        </select>
+      <div class="search-box">
+        <span class="sicon">🔎</span>
+        <input type="text" id="searchInput" placeholder="ค้นหา หมวดหมู่ โน้ต หรือผู้จ่าย" oninput="handleSearch()">
       </div>
-      <div class="card" id="fullList"></div>
+      <div class="seg" id="typeSeg">
+        <button data-v="ALL" class="active" onclick="setListType('ALL')">ทั้งหมด</button>
+        <button data-v="EXPENSE" onclick="setListType('EXPENSE')">รายจ่าย</button>
+        <button data-v="INCOME" onclick="setListType('INCOME')">รายรับ</button>
+      </div>
+      <input type="hidden" id="filterType" value="ALL">
+      <div id="categoryFilterChip"></div>
+      <div id="fullList"></div>
     </div>
   </div>
 
   <!-- SCREEN: Add/Edit Transaction -->
   <div class="screen" id="screen-form">
     <div class="screen-pad content-narrow">
-      <div class="topbar">
-        <button class="btn ghost" onclick="showScreen(prevFormScreen)">← ย้อนกลับ</button>
-        <h2 id="formTitle" style="font-size:17px;">เพิ่มรายการ</h2>
-        <div style="width:60px;"></div>
+      <div class="form-head">
+        <button class="icon-btn" onclick="closeForm()" aria-label="ปิด">✕</button>
+        <h2 id="formTitle">บันทึกรายการ</h2>
+        <button class="icon-btn danger" id="deleteBtn" style="display:none;" onclick="deleteTransaction()" aria-label="ลบรายการ">🗑️</button>
+        <span id="deleteSpacer" style="width:38px;"></span>
       </div>
       <div class="type-toggle">
         <button id="toggleExpense" class="active expense" onclick="setFormType('EXPENSE')">รายจ่าย</button>
         <button id="toggleIncome" class="income" onclick="setFormType('INCOME')">รายรับ</button>
       </div>
-      <div class="field">
-        <label>จำนวนเงิน (บาท)</label>
-        <input type="number" id="formAmount" inputmode="decimal" placeholder="0.00">
+      <div class="amount-wrap">
+        <span class="cur" id="formCurSym">฿</span>
+        <input type="number" id="formAmount" class="amount-input" inputmode="decimal" placeholder="0">
       </div>
       <div class="field">
         <label>หมวดหมู่</label>
         <div id="formCategories"></div>
       </div>
       <div class="field">
-        <label>ผู้จ่าย</label>
-        <div id="formPayers"></div>
+        <label>โน้ต</label>
+        <input type="text" id="formNote" placeholder="เช่น ข้าวมันไก่, ค่าน้ำมัน (ไม่ใส่ก็ได้)">
       </div>
-      <div class="field">
-        <label>วันที่</label>
-        <input type="date" id="formDate">
+      <details class="fold" id="formMore" data-fold>
+        <summary>ผู้จ่าย และวันที่<span class="fold-meta" id="formMoreMeta"></span></summary>
+        <div class="fold-body">
+          <div class="field">
+            <label>ผู้จ่าย</label>
+            <div id="formPayers"></div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label>วันที่</label>
+            <input type="date" id="formDate" onchange="updateFormMeta()">
+          </div>
+        </div>
+      </details>
+      <div class="form-sticky">
+        <button class="btn block" onclick="saveTransaction()">บันทึก</button>
       </div>
-      <div class="field">
-        <label>โน้ต (ไม่บังคับ)</label>
-        <textarea id="formNote" rows="2" placeholder="รายละเอียดเพิ่มเติม"></textarea>
-      </div>
-      <button class="btn block" onclick="saveTransaction()">บันทึก</button>
-      <button class="btn danger block" style="margin-top:10px; display:none;" id="deleteBtn" onclick="deleteTransaction()">ลบรายการนี้</button>
     </div>
   </div>
 
@@ -480,9 +591,7 @@
     <div class="stats-layout">
     <div class="stats-hero">
       <div class="stats-topbar">
-        <button class="circ-btn" onclick="navTo('screen-dashboard')">‹</button>
-        <h2>สถิติ</h2>
-        <button class="circ-btn" onclick="exportCSV()" title="ส่งออก CSV">⬇</button>
+        <h2>สรุปยอด</h2>
       </div>
       <div class="stats-figures">
         <div>
@@ -503,10 +612,9 @@
     <div class="stats-sheet">
       <div class="sheet-handle"></div>
       <div class="share-row">
-        <button class="btn share-text-btn" onclick="shareAsText()">📝 แชร์ข้อความ</button>
-        <button class="btn" onclick="shareAsImage()">🖼️ แชร์รูปภาพ</button>
+        <button class="act primary" onclick="openShareSheet()">📤 แชร์สรุป</button>
+        <button class="act" onclick="openSplitModal()">🧮 หารค่าใช้จ่าย</button>
       </div>
-      <button class="btn split-btn" onclick="openSplitModal()">🧮 หารค่าใช้จ่าย</button>
       <div class="section-head">
         <h3 id="breakdownHeading">รายละเอียดตามหมวดหมู่</h3>
       </div>
@@ -519,42 +627,57 @@
   <div class="screen" id="screen-settings">
     <div class="screen-pad content-narrow">
       <div class="topbar"><h2>ตั้งค่า</h2></div>
-      <div class="card">
-        <div style="font-weight:600; margin-bottom:2px;" id="settingsName"></div>
-        <div style="font-size:13px; color:var(--muted);">โปรไฟล์ปัจจุบัน · Chatawut Touchpi Expense Tracker</div>
+      <div class="profile-card">
+        <div class="profile-avatar" id="settingsAvatar">C</div>
+        <div><div style="font-weight:700;" id="settingsName"></div><div style="font-size:12.5px; color:var(--muted);">โปรไฟล์ปัจจุบัน</div></div>
       </div>
-      <div class="card">
-        <label>สกุลเงินที่แสดง</label>
-        <select id="currencySelect" onchange="changeCurrency()">
-          <option value="THB">฿ บาท (THB)</option>
-          <option value="USD">$ ดอลลาร์สหรัฐ (USD)</option>
-          <option value="JPY">¥ เยน (JPY)</option>
-          <option value="EUR">€ ยูโร (EUR)</option>
-          <option value="GBP">£ ปอนด์สเตอร์ลิง (GBP)</option>
-          <option value="CNY">¥ หยวนจีน (CNY)</option>
-          <option value="SGD">S$ ดอลลาร์สิงคโปร์ (SGD)</option>
-          <option value="AUD">A$ ดอลลาร์ออสเตรเลีย (AUD)</option>
-        </select>
-        <p style="font-size:11.5px; color:var(--muted); margin-top:8px; line-height:1.5;">เปลี่ยนแค่สัญลักษณ์และรูปแบบตัวเลขที่แสดง ไม่ใช่การแปลงอัตราแลกเปลี่ยน ตัวเลขที่บันทึกไว้จะเท่าเดิม</p>
-      </div>
-      <button class="btn secondary block" style="margin-bottom:10px;" onclick="exportCSV()">📄 ส่งออกข้อมูลเป็น CSV</button>
-      <div class="card">
-        <div class="switch-row">
-          <label style="margin:0; font-size:14px; color:var(--text);">💾 สำรองอัตโนมัติวันละครั้ง</label>
-          <input type="checkbox" id="autoBackupToggle" onchange="toggleAutoBackup()">
+
+      <div class="set-title">ทั่วไป</div>
+      <div class="set-group">
+        <div class="set-row" style="cursor:default;">
+          <span class="set-ic">💱</span><span class="set-lbl">สกุลเงินที่แสดง</span>
+          <select id="currencySelect" class="set-select" onchange="changeCurrency()">
+            <option value="THB">฿ บาท</option>
+            <option value="USD">$ ดอลลาร์สหรัฐ</option>
+            <option value="JPY">¥ เยน</option>
+            <option value="EUR">€ ยูโร</option>
+            <option value="GBP">£ ปอนด์</option>
+            <option value="CNY">¥ หยวน</option>
+            <option value="SGD">S$ ดอลลาร์สิงคโปร์</option>
+            <option value="AUD">A$ ดอลลาร์ออสเตรเลีย</option>
+          </select>
         </div>
-        <div id="autoBackupInfo" style="font-size:12px; color:var(--muted); margin-top:8px; line-height:1.5;"></div>
-        <button class="btn secondary block" id="pickBackupFileBtn" style="margin-top:10px; display:none;" onclick="pickBackupFile()">📁 เลือกไฟล์สำรอง (เขียนทับทุกวัน)</button>
+        <button class="set-row" onclick="manageCategories()"><span class="set-ic">🏷️</span><span class="set-lbl">หมวดหมู่<small>เพิ่ม หรือลบหมวดหมู่รายรับ/รายจ่าย</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="openPayerModal()"><span class="set-ic">👥</span><span class="set-lbl">ผู้จ่ายเงิน<small id="setPayerSub">แก้ชื่อ เพิ่ม หรือลบ</small></span><span class="chev">›</span></button>
       </div>
-      <button class="btn secondary block" style="margin-bottom:6px;" onclick="exportJSON()">💾 สำรองข้อมูล (JSON)</button>
-      <button class="btn secondary block" style="margin-bottom:6px;" onclick="triggerImportJSON()">📥 กู้คืนข้อมูลจากไฟล์สำรอง</button>
-      <p style="font-size:12px; color:var(--muted); margin:0 0 10px; line-height:1.5;">แนะนำให้กด "สำรองข้อมูล" เก็บไฟล์ไว้เป็นระยะ โดยเฉพาะถ้าใช้ผ่าน Safari เพราะบางครั้งเบราว์เซอร์อาจล้างข้อมูลของเว็บที่ไม่ได้เปิดนานๆ</p>
+
+      <div class="set-title">สำรองข้อมูล</div>
+      <div class="set-group">
+        <div class="set-row" style="cursor:default;">
+          <span class="set-ic">🔄</span><span class="set-lbl">สำรองอัตโนมัติวันละครั้ง</span>
+          <input type="checkbox" class="switch" id="autoBackupToggle" onchange="toggleAutoBackup()">
+        </div>
+        <div class="set-note" id="autoBackupInfo"></div>
+        <button class="set-row" id="pickBackupFileBtn" style="display:none;" onclick="pickBackupFile()"><span class="set-ic">📁</span><span class="set-lbl">เปลี่ยนไฟล์ที่เก็บสำรอง</span><span class="chev">›</span></button>
+        <button class="set-row" onclick="exportJSON()"><span class="set-ic">💾</span><span class="set-lbl">สำรองตอนนี้<small>ดาวน์โหลดไฟล์ .json</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="triggerImportJSON()"><span class="set-ic">📥</span><span class="set-lbl">กู้คืนจากไฟล์สำรอง</span><span class="chev">›</span></button>
+        <button class="set-row" onclick="exportCSV()"><span class="set-ic">📄</span><span class="set-lbl">ส่งออกเป็น Excel<small>ไฟล์ .csv</small></span><span class="chev">›</span></button>
+      </div>
       <input type="file" id="importFileInput" accept="application/json" style="display:none;" onchange="handleImportFile(event)">
-      <button class="btn secondary block" style="margin-bottom:10px;" onclick="showChangePin()">🔒 เปลี่ยนรหัส PIN</button>
-      <button class="btn secondary block" style="margin-bottom:10px;" onclick="manageCategories()">🏷️ จัดการหมวดหมู่</button>
-      <button class="btn secondary block" style="margin-bottom:10px;" onclick="openPayerModal()">👥 จัดการผู้จ่ายเงิน</button>
-      <button class="btn danger block" style="margin-bottom:10px;" onclick="confirmClearData()">🗑️ ล้างข้อมูลทั้งหมด</button>
-      <button class="btn secondary block" onclick="logout()">👤 เปลี่ยนโปรไฟล์ / ออกจากระบบ</button>
+
+      <div class="set-title">บัญชี</div>
+      <div class="set-group">
+        <button class="set-row" onclick="showChangePin()"><span class="set-ic">🔒</span><span class="set-lbl">เปลี่ยนรหัส PIN</span><span class="chev">›</span></button>
+        <button class="set-row" onclick="logout()"><span class="set-ic">🚪</span><span class="set-lbl">เปลี่ยนโปรไฟล์ / ออกจากระบบ</span><span class="chev">›</span></button>
+      </div>
+
+      <details class="fold plain" id="foldDanger">
+        <summary>ตัวเลือกขั้นสูง</summary>
+        <div class="set-group">
+          <button class="set-row danger" onclick="confirmClearData()"><span class="set-ic">🗑️</span><span class="set-lbl">ล้างข้อมูลทั้งหมดของโปรไฟล์นี้<small>ลบรายการทั้งหมด กู้คืนไม่ได้</small></span></button>
+        </div>
+      </details>
+      <p class="set-foot">Chatawut Touchpi Expense Tracker</p>
     </div>
   </div>
 
@@ -563,7 +686,8 @@
   <div class="bottomnav" id="bottomnav" style="display:none;">
     <button class="navbtn active" data-screen="screen-dashboard" onclick="navTo('screen-dashboard')"><span class="icon">🏠</span>หน้าหลัก</button>
     <button class="navbtn" data-screen="screen-list" onclick="navTo('screen-list')"><span class="icon">📋</span>รายการ</button>
-    <button class="navbtn" data-screen="screen-chart" onclick="navTo('screen-chart')"><span class="icon">📊</span>สถิติ</button>
+    <button class="nav-add" onclick="openAddForm()" aria-label="บันทึกรายการ"><span>+</span></button>
+    <button class="navbtn" data-screen="screen-chart" onclick="navTo('screen-chart')"><span class="icon">📊</span>สรุปยอด</button>
     <button class="navbtn" data-screen="screen-settings" onclick="navTo('screen-settings')"><span class="icon">⚙️</span>ตั้งค่า</button>
   </div>
   <button class="fab" id="fabBtn" style="display:none;" onclick="openAddForm()">+</button>
@@ -635,11 +759,25 @@
     </div>
   </div>
 
+  <!-- Modal: share sheet -->
+  <div class="modal-overlay" id="shareModal">
+    <div class="modal-sheet">
+      <h3>แชร์สรุป</h3>
+      <p style="font-size:12.5px; color:var(--muted);">ส่งสรุปของช่วงที่กำลังดูไปยัง LINE หรือแอปอื่น</p>
+      <div class="set-group sheet-list">
+        <button class="set-row" onclick="closeShareSheet(); shareAsText();"><span class="set-ic">📝</span><span class="set-lbl">เป็นข้อความ<small>อ่านง่าย มีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="closeShareSheet(); shareAsImage();"><span class="set-ic">🖼️</span><span class="set-lbl">เป็นรูปภาพ<small>ภาพหน้าสรุปแนวตั้ง</small></span><span class="chev">›</span></button>
+      </div>
+      <button class="btn secondary block" onclick="closeShareSheet()">ยกเลิก</button>
+    </div>
+  </div>
+
   <!-- Modal: custom date range -->
   <div class="modal-overlay" id="rangeModal">
     <div class="modal-sheet">
-      <h3>เลือกช่วงวันที่เอง</h3>
-      <p style="font-size:12.5px; color:var(--muted); margin-bottom:14px;">เลือกวันเดียวได้โดยตั้งวันเริ่มต้นและสิ้นสุดเป็นวันเดียวกัน</p>
+      <h3>เลือกช่วงเวลา</h3>
+      <button class="btn secondary block" style="margin-bottom:14px;" onclick="closeRangeModal(); showAllTimeStats();">📈 ดูทั้งหมดตั้งแต่รายการแรก</button>
+      <p style="font-size:12.5px; color:var(--muted); margin-bottom:12px;">หรือกำหนดเอง (เลือกวันเดียวได้ โดยตั้งวันเริ่มและวันสิ้นสุดเป็นวันเดียวกัน)</p>
       <div class="field">
         <label>วันที่เริ่มต้น</label>
         <input type="date" id="rangeStartInput">
@@ -727,6 +865,10 @@ function uid(){ return Date.now().toString(36) + Math.random().toString(36).slic
 function showScreen(id){
   document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
+  document.body.classList.toggle("task-mode", id === "screen-form");
+  const mc = document.querySelector(".main-content");
+  if(mc) mc.scrollTop = 0;
+  window.scrollTo(0, 0);
 }
 function toast(msg){
   const t = document.getElementById("toast");
@@ -749,7 +891,8 @@ const CURRENCIES = {
 function fmtMoney(n){
   const code = (currentData && currentData.currency) || "THB";
   const c = CURRENCIES[code] || CURRENCIES.THB;
-  return c.symbol + Number(n||0).toLocaleString(c.locale, {minimumFractionDigits:c.decimals, maximumFractionDigits:c.decimals});
+  const v = Number(n||0);
+  return (v < 0 ? "-" : "") + c.symbol + Math.abs(v).toLocaleString(c.locale, {minimumFractionDigits:c.decimals, maximumFractionDigits:c.decimals});
 }
 
 /* ---------- PROFILE SELECT ---------- */
@@ -857,6 +1000,7 @@ function login(p){
   document.getElementById("app").classList.add("logged-in");
   document.getElementById("greetName").textContent = "สวัสดี, " + p.name;
   document.getElementById("settingsName").textContent = p.name;
+  document.getElementById("settingsAvatar").textContent = p.name.charAt(0).toUpperCase();
   document.getElementById("currencySelect").value = currentData.currency;
   searchQuery = ""; categoryFilter = null;
   navTo("screen-dashboard");
@@ -910,74 +1054,61 @@ function txInViewMonth(list){
 /* ---------- DASHBOARD ---------- */
 function handleSearch(){
   searchQuery = document.getElementById("searchInput").value.trim().toLowerCase();
-  renderDashboard();
+  renderList();
+}
+function setListType(v){
+  document.getElementById("filterType").value = v;
+  document.querySelectorAll("#typeSeg button").forEach(b => b.classList.toggle("active", b.dataset.v === v));
+  renderList();
 }
 function renderDashboard(){
   document.getElementById("monthLabel").textContent = monthLabel();
   const hasAnyTx = currentData.transactions.length > 0;
-  document.getElementById("onboardArrow").style.display = hasAnyTx ? "none" : "block";
 
   const monthTx = txInViewMonth(currentData.transactions);
   const income = monthTx.filter(t=>t.type==="INCOME").reduce((s,t)=>s+t.amount,0);
   const expense = monthTx.filter(t=>t.type==="EXPENSE").reduce((s,t)=>s+t.amount,0);
   document.getElementById("incomeAmt").textContent = fmtMoney(income);
   document.getElementById("expenseAmt").textContent = fmtMoney(expense);
-  const balancePill = document.getElementById("balancePill");
-  balancePill.title = "คงเหลือเดือนนี้ " + fmtMoney(income - expense);
+  document.getElementById("balanceAmt").textContent = fmtMoney(income - expense);
 
   renderPromoCard(hasAnyTx);
-  renderCategoryGrid();
+  document.getElementById("homeExtras").style.display = hasAnyTx ? "block" : "none";
+  renderCategoryGrid(monthTx);
   renderPayerSummary(monthTx);
 
-  const heading = document.getElementById("recentHeading");
   const container = document.getElementById("recentList");
   container.innerHTML = "";
-  let list;
-  if(searchQuery){
-    heading.textContent = "ผลการค้นหา";
-    list = [...currentData.transactions]
-      .filter(t => t.category.toLowerCase().includes(searchQuery) || (t.note||"").toLowerCase().includes(searchQuery))
-      .sort((a,b)=>b.date-a.date || b.createdAt-a.createdAt)
-      .slice(0,8);
-  } else {
-    heading.textContent = "รายการล่าสุด";
-    list = [...currentData.transactions].sort((a,b)=>b.date-a.date || b.createdAt-a.createdAt).slice(0,5);
-  }
+  const list = [...currentData.transactions].sort((a,b)=>b.date-a.date || b.createdAt-a.createdAt).slice(0,5);
   if(list.length === 0){
-    container.innerHTML = `<div class="empty-state"><div class="emoji">🧾</div>${searchQuery ? "ไม่พบรายการที่ค้นหา" : "ยังไม่มีรายการ"}</div>`;
+    container.innerHTML = `<div class="empty-state"><div class="emoji">🧾</div>ยังไม่มีรายการ</div>`;
     return;
   }
   list.forEach(t => container.appendChild(txItemEl(t)));
 }
 function renderPromoCard(hasAnyTx){
   const el = document.getElementById("promoCard");
-  if(!hasAnyTx){
-    el.innerHTML = `
-      <div class="promo-emoji">🐷</div>
-      <div>
-        <div class="promo-title">เริ่มต้นบันทึกรายการแรกของคุณ</div>
-        <div class="promo-text">กดปุ่มด้านล่างเพื่อบันทึกรายรับหรือรายจ่ายรายการแรก แค่นี้แอปก็เริ่มสรุปข้อมูลให้อัตโนมัติ</div>
-        <button class="btn" onclick="openAddForm()">+ เพิ่มรายการ</button>
-      </div>`;
-  } else {
-    const dayIndex = Math.floor(Date.now()/86400000) % MONEY_TIPS.length;
-    el.innerHTML = `
-      <div class="promo-emoji">💡</div>
-      <div>
-        <div class="promo-title">เคล็ดลับการเงินวันนี้</div>
-        <div class="promo-text">${MONEY_TIPS[dayIndex]}</div>
-        <button class="btn" onclick="openAddForm()">+ เพิ่มรายการ</button>
-      </div>`;
-  }
+  if(hasAnyTx){ el.innerHTML = ""; return; }
+  el.innerHTML = `
+    <div class="guide">
+      <h4>👋 เริ่มใช้งานง่ายๆ 3 ขั้นตอน</h4>
+      <ol>
+        <li>กดปุ่ม <b>+ บันทึกรายการ</b></li>
+        <li>ใส่จำนวนเงิน เลือกหมวดหมู่ แล้วกด <b>บันทึก</b></li>
+        <li>ยอดคงเหลือคำนวณให้อัตโนมัติ กดการ์ดสีฟ้าเพื่อดูสรุปและแชร์</li>
+      </ol>
+    </div>`;
 }
-function renderCategoryGrid(){
+function renderCategoryGrid(monthTx){
   const container = document.getElementById("categoryGrid");
   container.innerHTML = "";
-  const cats = (currentData.categories.EXPENSE || []).slice(0,6);
+  const totals = {};
+  (monthTx || []).filter(t => t.type === "EXPENSE").forEach(t => { totals[t.category] = (totals[t.category]||0) + t.amount; });
+  const cats = [...(currentData.categories.EXPENSE || [])].sort((a,b)=>(totals[b]||0)-(totals[a]||0));
   cats.forEach(c => {
     const el = document.createElement("div");
     el.className = "cat-tile";
-    el.innerHTML = `<div class="cat-tile-icon">${CAT_ICONS[c]||"📦"}</div><div class="cat-tile-label">${escapeHtml(c)}</div>`;
+    el.innerHTML = `<div class="cat-tile-icon">${CAT_ICONS[c]||"📦"}</div><div class="cat-tile-label">${escapeHtml(c)}</div><div class="cat-tile-amt">${totals[c] ? fmtMoney(totals[c]) : "–"}</div>`;
     el.onclick = () => { categoryFilter = c; navTo("screen-list"); };
     container.appendChild(el);
   });
@@ -1006,6 +1137,10 @@ function renderList(){
   let list = [...currentData.transactions].sort((a,b)=>b.date-a.date || b.createdAt-a.createdAt);
   if(filter !== "ALL") list = list.filter(t => t.type === filter);
   if(categoryFilter) list = list.filter(t => t.category === categoryFilter);
+  if(searchQuery) list = list.filter(t =>
+    t.category.toLowerCase().includes(searchQuery) ||
+    (t.note||"").toLowerCase().includes(searchQuery) ||
+    (t.payer||"").toLowerCase().includes(searchQuery));
 
   const chipWrap = document.getElementById("categoryFilterChip");
   chipWrap.innerHTML = categoryFilter
@@ -1015,10 +1150,28 @@ function renderList(){
   const container = document.getElementById("fullList");
   container.innerHTML = "";
   if(list.length === 0){
-    container.innerHTML = '<div class="empty-state"><div class="emoji">🧾</div>ไม่มีรายการ</div>';
+    container.innerHTML = `<div class="empty-state"><div class="emoji">🧾</div>${searchQuery || categoryFilter ? "ไม่พบรายการที่ตรงกัน" : "ยังไม่มีรายการ"}</div>`;
     return;
   }
-  list.forEach(t => container.appendChild(txItemEl(t)));
+  // Group by day with a daily net total
+  const groups = [];
+  list.forEach(t => {
+    const key = new Date(t.date).toDateString();
+    let g = groups[groups.length-1];
+    if(!g || g.key !== key){ g = { key, date:t.date, items:[] }; groups.push(g); }
+    g.items.push(t);
+  });
+  groups.forEach(g => {
+    const net = g.items.reduce((s,t)=> s + (t.type === "INCOME" ? t.amount : -t.amount), 0);
+    const head = document.createElement("div");
+    head.className = "day-head";
+    head.innerHTML = `<span>${new Date(g.date).toLocaleDateString('th-TH',{weekday:'short', day:'numeric', month:'short', year:'numeric'})}</span><span style="color:${net<0?'var(--expense)':'var(--income)'}">${net<0?'-':'+'}${fmtMoney(Math.abs(net))}</span>`;
+    container.appendChild(head);
+    const card = document.createElement("div");
+    card.className = "day-card";
+    g.items.forEach(t => card.appendChild(txItemEl(t)));
+    container.appendChild(card);
+  });
 }
 function clearCategoryFilter(){
   categoryFilter = null;
@@ -1031,7 +1184,8 @@ function openAddForm(){
   editingTxId = null;
   formType = "EXPENSE";
   prevFormScreen = document.querySelector(".navbtn.active")?.dataset.screen || "screen-dashboard";
-  document.getElementById("formTitle").textContent = "เพิ่มรายการ";
+  document.getElementById("formTitle").textContent = "บันทึกรายการ";
+  document.getElementById("deleteSpacer").style.display = "block";
   document.getElementById("formAmount").value = "";
   document.getElementById("formNote").value = "";
   document.getElementById("formDate").value = new Date().toISOString().slice(0,10);
@@ -1039,7 +1193,9 @@ function openAddForm(){
   formPayer = "";
   renderFormPayers();
   setFormType("EXPENSE");
+  setFormCurrency();
   showScreen("screen-form");
+  setTimeout(() => { try{ document.getElementById("formAmount").focus(); }catch(e){} }, 150);
 }
 function openEditForm(txId){
   const t = currentData.transactions.find(x => x.id === txId);
@@ -1047,13 +1203,15 @@ function openEditForm(txId){
   editingTxId = txId;
   prevFormScreen = document.querySelector(".navbtn.active")?.dataset.screen || "screen-dashboard";
   document.getElementById("formTitle").textContent = "แก้ไขรายการ";
+  document.getElementById("deleteSpacer").style.display = "none";
   document.getElementById("formAmount").value = t.amount;
   document.getElementById("formNote").value = t.note || "";
   document.getElementById("formDate").value = new Date(t.date).toISOString().slice(0,10);
-  document.getElementById("deleteBtn").style.display = "block";
+  document.getElementById("deleteBtn").style.display = "flex";
   formPayer = t.payer || "";
   renderFormPayers();
   setFormType(t.type, t.category);
+  setFormCurrency();
   showScreen("screen-form");
 }
 function setFormType(type, selectedCat){
@@ -1071,6 +1229,20 @@ function setFormType(type, selectedCat){
     chip.onclick = () => { formSelectedCat = c; setFormType(type, c); };
     wrap.appendChild(chip);
   });
+}
+function setFormCurrency(){
+  const code = (currentData && currentData.currency) || "THB";
+  document.getElementById("formCurSym").textContent = (CURRENCIES[code] || CURRENCIES.THB).symbol;
+}
+function updateFormMeta(){
+  const v = document.getElementById("formDate").value;
+  const today = new Date().toISOString().slice(0,10);
+  const dateTxt = !v ? "" : (v === today ? "วันนี้" : new Date(v).toLocaleDateString('th-TH',{day:'numeric', month:'short'}));
+  const payerTxt = formPayer ? "👤 " + formPayer : "ไม่ระบุผู้จ่าย";
+  document.getElementById("formMoreMeta").textContent = [payerTxt, dateTxt].filter(Boolean).join(" · ");
+}
+function closeForm(){
+  navTo(prevFormScreen || "screen-dashboard");
 }
 function saveTransaction(){
   const amount = parseFloat(document.getElementById("formAmount").value);
@@ -1093,8 +1265,7 @@ function saveTransaction(){
     toast("บันทึกรายการแล้ว");
   }
   saveData();
-  showScreen(prevFormScreen);
-  document.querySelectorAll(".navbtn").forEach(b => b.classList.toggle("active", b.dataset.screen === prevFormScreen));
+  navTo(prevFormScreen);
   refreshAll();
 }
 function deleteTransaction(){
@@ -1102,8 +1273,27 @@ function deleteTransaction(){
   currentData.transactions = currentData.transactions.filter(t => t.id !== editingTxId);
   saveData();
   toast("ลบรายการแล้ว");
-  showScreen(prevFormScreen);
+  navTo(prevFormScreen);
   refreshAll();
+}
+
+/* ---------- UI helpers ---------- */
+function openShareSheet(){ document.getElementById("shareModal").classList.add("active"); }
+function closeShareSheet(){ document.getElementById("shareModal").classList.remove("active"); }
+function initUi(){
+  // Remember which collapsible sections the person keeps open
+  document.querySelectorAll("details[data-fold]").forEach(d => {
+    try{ const v = localStorage.getItem("expapp_fold_" + d.id); if(v !== null) d.open = v === "1"; }catch(e){}
+    d.addEventListener("toggle", () => { try{ localStorage.setItem("expapp_fold_" + d.id, d.open ? "1" : "0"); }catch(e){} });
+  });
+  // Tap outside a bottom sheet to close it
+  const closers = { catModal: () => closeCatModal(), payerModal: () => closePayerModal() };
+  document.querySelectorAll(".modal-overlay").forEach(o => {
+    o.addEventListener("click", ev => {
+      if(ev.target !== o) return;
+      if(closers[o.id]) closers[o.id](); else o.classList.remove("active");
+    });
+  });
 }
 
 /* ---------- PAYERS ---------- */
@@ -1128,16 +1318,18 @@ function renderFormPayers(){
     formPayer = n; renderFormPayers();
   };
   wrap.appendChild(add);
+  updateFormMeta();
 }
 function renderPayerSummary(monthTx){
   const card = document.getElementById("payerSummaryCard");
   const exp = monthTx.filter(t => t.type === "EXPENSE");
   const pt = payerTotals(exp);
   const total = exp.reduce((s,t)=>s+t.amount,0);
+  document.getElementById("payerFoldMeta").textContent = total ? fmtMoney(total) : "";
   const rows = currentData.payers.filter(n => pt[n]).map(n => [n, pt[n]]);
   if(pt[""]) rows.push(["ไม่ระบุ", pt[""]]);
   if(!rows.length){
-    card.innerHTML = `<div style="font-size:13px; color:var(--muted); text-align:center; padding:8px;">ยังไม่มีรายจ่ายเดือนนี้ เลือก "ผู้จ่าย" ตอนเพิ่มรายการ เพื่อดูว่าใครจ่ายเท่าไหร่</div>`;
+    card.innerHTML = `<div style="font-size:13px; color:var(--muted); padding:4px 0;">ยังไม่มีรายจ่ายเดือนนี้ เลือก "ผู้จ่าย" ตอนบันทึกรายการ แล้วยอดจะขึ้นที่นี่</div>`;
     return;
   }
   card.innerHTML = rows.sort((a,b)=>b[1]-a[1]).map(([n,v]) => `
@@ -1374,21 +1566,14 @@ function statsRangeLabel(buckets, rangeTx){
 function renderStatsRangeNav(buckets, rangeTx){
   const el = document.getElementById("statsRangeNav");
   const label = statsRangeLabel(buckets, rangeTx);
-  if(statsCustom){
+  if(statsCustom || statsPeriod === "ALL"){
     el.innerHTML = `
-      <span>ช่วงที่เลือก: <span class="range-label">${label}</span></span>
-      <button class="range-action" onclick="resetStatsView()">✕ กลับค่าเริ่มต้น</button>`;
-  } else if(statsPeriod === "ALL"){
-    el.innerHTML = `
-      <span>ทั้งหมด: <span class="range-label">${label}</span></span>
-      <button class="range-action" onclick="resetStatsView()">✕ กลับค่าเริ่มต้น</button>`;
+      <span class="range-label">${statsPeriod === "ALL" ? "ทั้งหมด · " : ""}${label}</span>
+      <button class="range-chip" onclick="resetStatsView()">✕ ล้างช่วงเวลา</button>`;
   } else {
     el.innerHTML = `
-      <div class="range-arrows"><button onclick="pageStats(-1)">‹</button><span class="range-label">${label}</span><button onclick="pageStats(1)" ${statsOffset>=0?'style="opacity:.4;pointer-events:none;"':''}>›</button></div>
-      <div style="display:flex; gap:12px;">
-        <button class="range-action" onclick="openRangeModal()">📅 เลือกเอง</button>
-        <button class="range-action" onclick="showAllTimeStats()">📈 ทั้งหมด</button>
-      </div>`;
+      <div class="range-arrows"><button onclick="pageStats(-1)" aria-label="ก่อนหน้า">‹</button><span class="range-label">${label}</span><button onclick="pageStats(1)" aria-label="ถัดไป" ${statsOffset>=0?'style="opacity:.4;pointer-events:none;"':''}>›</button></div>
+      <button class="range-chip" onclick="openRangeModal()">📅 ช่วงเวลา</button>`;
   }
 }
 function showAllTimeStats(){
@@ -1740,7 +1925,7 @@ async function renderAutoBackupSettings(){
   let msg;
   if(canOverwriteFile){
     const h = await idbGet("fh_" + currentProfile.id);
-    pickBtn.style.display = ab.enabled ? "block" : "none";
+    pickBtn.style.display = ab.enabled ? "flex" : "none";
     msg = h ? `เขียนทับไฟล์: <b>${escapeHtml(h.name)}</b>` : "ยังไม่ได้เลือกไฟล์ กดปุ่มด้านล่างเพื่อเลือกที่เก็บไฟล์";
   } else if(isIOS){
     pickBtn.style.display = "none";
@@ -1750,7 +1935,8 @@ async function renderAutoBackupSettings(){
     msg = "ดาวน์โหลดไฟล์ลงโฟลเดอร์ Downloads วันละครั้งตอนเปิดแอป (เบราว์เซอร์นี้เขียนทับไฟล์เดิมไม่ได้)";
   }
   if(ab.lastDate) msg += `<br>สำรองล่าสุด: ${ab.lastDate}`;
-  info.innerHTML = ab.enabled ? msg : "ปิดอยู่";
+  info.innerHTML = ab.enabled ? msg : "";
+  info.style.display = ab.enabled ? "block" : "none";
 }
 async function toggleAutoBackup(){
   const ab = getAutoBackup();
@@ -1902,6 +2088,7 @@ function confirmClearData(){
 
 /* ---------- INIT ---------- */
 window.onload = () => {
+  initUi();
   loadProfiles();
   renderProfileList();
 };
