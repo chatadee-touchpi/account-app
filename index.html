@@ -391,6 +391,13 @@
   .home-payers{background:#fff; border:1px solid var(--border); border-radius:16px; padding:12px 16px 10px; margin-bottom:16px;}
   .join-link{margin-top:12px; background:none; border:none; color:var(--brand-dark); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; padding:8px;}
   .narrow-form{width:100%; max-width:320px;}
+  .name-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);}
+  .name-row .payer-dot{flex-shrink:0;}
+  .name-row .nr-main{flex:1; min-width:0;}
+  .name-row input{padding:9px 12px; font-size:15px;}
+  .name-row small{display:block; font-size:11.5px; color:var(--muted); margin-top:3px;}
+  .name-row .nr-del{background:none; border:none; color:var(--danger); font-size:18px; cursor:pointer; padding:6px; flex-shrink:0;}
+  .name-add{width:100%; margin:10px 0 14px; padding:11px; border:1.5px dashed var(--brand); background:#fff; color:var(--brand-dark); border-radius:12px; font-weight:700; cursor:pointer; font-family:inherit;}
   .tx-info .sub{font-size:12px; color:var(--muted); margin-top:2px;}
   .tx-info .who{display:inline-block; background:var(--brand-light); color:var(--brand-dark); font-weight:600; border-radius:8px; padding:0 6px; margin-left:2px;}
   .payer-head{display:flex; justify-content:space-between; font-size:11.5px; color:var(--muted); font-weight:600; padding-bottom:4px; border-bottom:1px solid var(--border);}
@@ -839,17 +846,17 @@
     </div>
   </div>
 
-  <!-- Modal: trip companions -->
+  <!-- Modal: trip companions / payer names -->
   <div class="modal-overlay" id="tripModal">
     <div class="modal-sheet">
-      <h3>ไปกับใครบ้าง?</h3>
-      <p style="font-size:13px; color:var(--muted); line-height:1.6;">พิมพ์ชื่อทุกคนที่จะหารเงินด้วยกัน <b>รวมตัวคุณเองด้วย</b> คั่นด้วยเว้นวรรค ตอนบันทึกรายการจะได้กดเลือกได้ว่าใครจ่าย</p>
-      <div class="field"><textarea id="tripNames" rows="2" placeholder="เช่น มิว แพร ฝน จูน ปุ๊ก บีม"></textarea></div>
+      <h3>คนที่หารเงินด้วยกัน</h3>
+      <p style="font-size:13px; color:var(--muted); line-height:1.6;">แก้ชื่อในช่องได้เลย <b>รวมตัวคุณเองด้วย</b> รายการที่บันทึกไว้จะเปลี่ยนชื่อตามช่องนั้น</p>
+      <div id="tripRows"></div>
+      <button class="name-add" onclick="addTripRow()">+ เพิ่มคน</button>
       <div class="row-gap">
-        <button class="btn secondary block" onclick="closeTripModal(true)">ข้ามไปก่อน</button>
-        <button class="btn block" onclick="saveTripNames()">บันทึกชื่อ</button>
+        <button class="btn secondary block" onclick="closeTripModal(false)">ยกเลิก</button>
+        <button class="btn block" onclick="saveTripNames()">บันทึก</button>
       </div>
-      <button class="fold-link" style="margin-top:12px;" onclick="closeTripModal(false); openPayerModal();">แก้ทีละชื่อ / ลบชื่อ ›</button>
     </div>
   </div>
 
@@ -1238,8 +1245,8 @@ function renderPromoCard(hasAnyTx){
   }
   el.innerHTML = tripPrompt ? `
     <div class="trip-card">
-      <div class="txt"><b>👥 ยังใช้ชื่อ A B C D อยู่</b>ใส่ชื่อเพื่อนจริงจะดูง่ายกว่า</div>
-      <button class="btn" onclick="openTripModal()">ใส่ชื่อ</button>
+      <div class="txt"><b>👥 ยังใช้ชื่อ A B C D อยู่</b>เปลี่ยนเป็นชื่อเพื่อนจริงจะดูง่ายกว่า</div>
+      <button class="btn" onclick="openTripModal()">แก้ชื่อ</button>
     </div>` : "";
 }
 function renderCategoryGrid(monthTx){
@@ -1491,15 +1498,16 @@ async function decryptBlob(cfg, blob){
 function listLog(key){ currentData.setLog = currentData.setLog || {}; return (currentData.setLog[key] = currentData.setLog[key] || {}); }
 function logAdd(key, name){ const l = listLog(key); l[name] = { a: Date.now(), d: (l[name] && l[name].d) || 0 }; }
 function logDel(key, name){ const l = listLog(key); l[name] = { a: (l[name] && l[name].a) || 0, d: Date.now() }; }
-function mergeList(localList, remoteList, localLog, remoteLog){
+function mergeList(localList, remoteList, localLog, remoteLog, localIsNewer){
   const log = {};
   [remoteLog || {}, localLog || {}].forEach(m => Object.entries(m).forEach(([n,v]) => {
     const cur = log[n] || { a:0, d:0 };
     log[n] = { a: Math.max(cur.a, v.a || 0), d: Math.max(cur.d, v.d || 0) };
   }));
-  // Shared order comes from the group copy; names only this device has go at the end
-  const names = [...(remoteList || [])];
-  (localList || []).forEach(n => { if(!names.includes(n)) names.push(n); });
+  // Order comes from whichever device edited the list last (so a renamed person keeps their place)
+  const first = localIsNewer ? localList : remoteList, second = localIsNewer ? remoteList : localList;
+  const names = [...(first || [])];
+  (second || []).forEach(n => { if(!names.includes(n)) names.push(n); });
   Object.entries(log).forEach(([n,v]) => { if(v.a > v.d && !names.includes(n)) names.push(n); });
   return { list: names.filter(n => !log[n] || log[n].a >= log[n].d), log };
 }
@@ -1525,10 +1533,10 @@ function mergeData(local, remote){
   const ls = local.settingsUpdatedAt || 0, rs = remote.settingsUpdatedAt || 0;
   const s = rs > ls ? remote : local;
   const lLog = local.setLog || {}, rLog = remote.setLog || {}, setLog = {};
-  const payers = mergeList(local.payers, remote.payers, lLog.payers, rLog.payers); setLog.payers = payers.log;
+  const payers = mergeList(local.payers, remote.payers, lLog.payers, rLog.payers, ls > rs); setLog.payers = payers.log;
   const categories = {};
   ["EXPENSE","INCOME"].forEach(k => {
-    const m = mergeList((local.categories||{})[k], (remote.categories||{})[k], lLog["cat_"+k], rLog["cat_"+k]);
+    const m = mergeList((local.categories||{})[k], (remote.categories||{})[k], lLog["cat_"+k], rLog["cat_"+k], ls > rs);
     categories[k] = m.list; setLog["cat_"+k] = m.log;
   });
   return Object.assign({}, local, {
@@ -1758,9 +1766,31 @@ function shareSyncCode(){
 
 /* ---------- Trip companions ---------- */
 function openTripModal(){
-  document.getElementById("tripNames").value = payersAreDefault() ? "" : currentData.payers.join(" ");
+  const paid = payerTotals(currentData.transactions.filter(t => t.type === "EXPENSE"));
+  const names = [...currentData.payers];
+  // Names that appear on transactions but are missing from the list still get a row
+  Object.keys(paid).forEach(n => { if(n && !names.includes(n)) names.push(n); });
+  const wrap = document.getElementById("tripRows");
+  wrap.innerHTML = "";
+  names.forEach(n => wrap.appendChild(tripRowEl(n, paid[n] || 0)));
+  if(!names.length) addTripRow();
   document.getElementById("tripModal").classList.add("active");
-  setTimeout(() => { try{ document.getElementById("tripNames").focus(); }catch(e){} }, 150);
+}
+function tripRowEl(orig, paid){
+  const row = document.createElement("div");
+  row.className = "name-row";
+  row.dataset.orig = orig || "";
+  row.innerHTML = `<span class="payer-dot"></span>
+    <div class="nr-main"><input type="text" value="${escapeHtml(orig || "")}" placeholder="ชื่อ" onfocus="this.select()" oninput="this.closest('.name-row').querySelector('.payer-dot').textContent=(this.value.trim().charAt(0)||'?').toUpperCase()">
+    <small>${orig ? (paid ? "จ่ายไปแล้ว " + fmtMoney(paid) : "ยังไม่มีรายการที่จ่าย") : "คนใหม่"}</small></div>
+    <button class="nr-del" title="ลบคนนี้" onclick="this.closest('.name-row').remove()">✕</button>`;
+  row.querySelector(".payer-dot").textContent = ((orig || "?").charAt(0)).toUpperCase();
+  return row;
+}
+function addTripRow(){
+  const row = tripRowEl("", 0);
+  document.getElementById("tripRows").appendChild(row);
+  row.querySelector("input").focus();
 }
 function closeTripModal(dismiss){
   if(dismiss){ currentData.tripPromptDismissed = true; saveData({ noSync:true }); }
@@ -1768,15 +1798,29 @@ function closeTripModal(dismiss){
   refreshAll();
 }
 function saveTripNames(){
-  const names = [...new Set(document.getElementById("tripNames").value.split(/[\s,，、]+/).map(s => s.trim()).filter(Boolean))];
-  if(!names.length){ toast("พิมพ์ชื่ออย่างน้อย 1 ชื่อ"); return; }
-  const old = [...currentData.payers];
-  // Names already on transactions follow their new name in the same position (A -> first name, B -> second...)
+  const rows = [...document.querySelectorAll("#tripRows .name-row")].map(r => ({ orig: r.dataset.orig, name: r.querySelector("input").value.trim() }))
+    .filter(r => r.name || r.orig);
+  if(rows.some(r => !r.name)){ toast("มีช่องที่ยังไม่ได้ใส่ชื่อ ใส่ชื่อหรือกด ✕ เพื่อลบ"); return; }
+  const names = rows.map(r => r.name);
+  const dup = names.find((n,i) => names.indexOf(n) !== i);
+  if(dup){ toast(`ชื่อ "${dup}" ซ้ำกัน`); return; }
+  if(!names.length){ toast("ต้องมีอย่างน้อย 1 คน"); return; }
+  // Each row keeps its own identity, so renames follow the row (swaps work too)
   const rename = {};
-  old.forEach((o,i) => { if(names[i] && o !== names[i]) rename[o] = names[i]; });
-  currentData.transactions.forEach(t => { if(t.payer && rename[t.payer]){ t.payer = rename[t.payer]; t.updatedAt = Date.now(); } });
-  old.filter(o => !names.includes(o)).forEach(o => logDel("payers", o));
-  names.filter(n => !old.includes(n)).forEach(n => logAdd("payers", n));
+  rows.forEach(r => { if(r.orig && r.orig !== r.name) rename[r.orig] = r.name; });
+  const kept = new Set(rows.map(r => r.orig).filter(Boolean));
+  const before = [...currentData.payers];
+  const removed = [...new Set([...before, ...currentData.transactions.map(t => t.payer).filter(Boolean)])].filter(n => !kept.has(n));
+  const removedUsed = removed.filter(n => currentData.transactions.some(t => t.payer === n));
+  if(removedUsed.length && !confirm(`ลบ ${removedUsed.join(", ")}? รายการที่คนนี้จ่ายจะกลายเป็น "ไม่ระบุผู้จ่าย"`)) return;
+  const now = Date.now();
+  currentData.transactions.forEach(t => {
+    if(!t.payer) return;
+    if(rename[t.payer] !== undefined){ t.payer = rename[t.payer]; t.updatedAt = now; }
+    else if(removed.includes(t.payer)){ t.payer = ""; t.updatedAt = now; }
+  });
+  before.filter(n => !names.includes(n)).forEach(n => logDel("payers", n));
+  names.filter(n => !before.includes(n)).forEach(n => logAdd("payers", n));
   currentData.payers = names;
   currentData.tripPromptDismissed = true;
   saveData();
@@ -1899,18 +1943,21 @@ function renderPayerSummary(monthTx){
     <div class="payer-row"><span class="payer-name"><span class="payer-dot">${escapeHtml(n.charAt(0).toUpperCase())}</span>${escapeHtml(n)}</span><span class="payer-amt">${fmtMoney(v)}</span></div>`).join("")
     ;
 }
-function openPayerModal(){ renderPayerManageList(); document.getElementById("payerModal").classList.add("active"); }
+function openPayerModal(){ openTripModal(); }
 function closePayerModal(){ document.getElementById("payerModal").classList.remove("active"); refreshAll(); }
 function renderPayerManageList(){
   const list = document.getElementById("payerManageList");
   list.innerHTML = "";
   if(!currentData.payers.length){ list.innerHTML = `<div style="color:var(--muted); font-size:13px;">ยังไม่มีผู้จ่าย</div>`; return; }
-  currentData.payers.forEach((n, i) => {
+  currentData.payers.forEach(n => {
     const used = currentData.transactions.filter(t => t.payer === n).length;
     const row = document.createElement("div");
     row.className = "payer-row";
+    // Look the name up at click time so a re-ordered list can never edit the wrong person
     row.innerHTML = `<span class="payer-name"><span class="payer-dot">${escapeHtml(n.charAt(0).toUpperCase())}</span>${escapeHtml(n)} <span style="font-weight:400; color:var(--muted); font-size:12px;">${used} รายการ</span></span>
-      <span class="payer-actions"><button onclick="renamePayer(${i})">✏️</button><button onclick="deletePayer(${i})">🗑️</button></span>`;
+      <span class="payer-actions"><button class="pr-edit">✏️</button><button class="pr-del">🗑️</button></span>`;
+    row.querySelector(".pr-edit").onclick = () => renamePayer(currentData.payers.indexOf(n));
+    row.querySelector(".pr-del").onclick = () => deletePayer(currentData.payers.indexOf(n));
     list.appendChild(row);
   });
 }
