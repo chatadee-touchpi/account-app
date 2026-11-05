@@ -1499,11 +1499,14 @@ function renderSyncModal(){
     el.innerHTML = `<h3>ซิงค์ข้ามเครื่อง</h3>
       <p style="font-size:13px; color:var(--muted);">รหัสกลุ่มของคุณ</p>
       <div class="sync-code">${fmtCode(cfg.code)}</div>
+      <div class="row-gap" style="margin-bottom:10px;">
+        <button class="btn secondary block" onclick="copySyncCode()">📋 คัดลอกรหัส</button>
+        <button class="btn block" onclick="shareSyncCode()">📤 ส่งให้คนอื่น</button>
+      </div>
       <p style="font-size:12.5px; color:var(--muted); line-height:1.6;">ใช้ <b>รหัสกลุ่มนี้ + รหัสผ่านเดิม</b> ในเครื่องอื่น หรือส่งให้คนที่จะใช้บัญชีนี้ร่วมกัน (บอกรหัสผ่านแยกต่างหาก)</p>
       <div class="set-group sheet-list">
         <div class="set-row" style="cursor:default;"><span class="set-ic">${syncState.status === "err" ? "⚠️" : "✅"}</span><span class="set-lbl">${syncState.status === "busy" ? "กำลังซิงค์..." : syncState.status === "err" ? escapeHtml(syncState.msg) : "ซิงค์เรียบร้อย"}<small>ซิงค์ล่าสุด ${timeAgo(cfg.lastSync)}</small></span></div>
         <button class="set-row" onclick="syncNow(true)"><span class="set-ic">🔄</span><span class="set-lbl">ซิงค์ตอนนี้</span><span class="chev">›</span></button>
-        <button class="set-row" onclick="shareSyncCode()"><span class="set-ic">📤</span><span class="set-lbl">ส่งรหัสกลุ่มให้คนอื่น</span><span class="chev">›</span></button>
         <button class="set-row danger" onclick="leaveSync()"><span class="set-ic">🚪</span><span class="set-lbl">หยุดซิงค์ในเครื่องนี้<small>ข้อมูลในเครื่องและในกลุ่มยังอยู่ครบ</small></span></button>
       </div>
       <button class="btn secondary block" onclick="closeSyncModal()">ปิด</button>`;
@@ -1576,6 +1579,23 @@ function joinSyncGroup(){
 function leaveSync(){
   if(!confirm("หยุดซิงค์ในเครื่องนี้? ข้อมูลในเครื่องยังอยู่ และกลับมาเข้าร่วมใหม่ได้ด้วยรหัสกลุ่มและรหัสผ่านเดิม")) return;
   saveSyncCfg(null); setSyncState("idle", ""); toast("หยุดซิงค์แล้ว");
+}
+function copySyncCode(){
+  const cfg = getSync(); if(!cfg) return;
+  const code = fmtCode(cfg.code);
+  const done = () => toast("คัดลอกรหัสกลุ่มแล้ว: " + code);
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(code).then(done).catch(() => fallbackCopy(code, done));
+  } else fallbackCopy(code, done);
+}
+function fallbackCopy(text, done){
+  // Older Safari / non-secure contexts
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.setAttribute("readonly", ""); ta.style.cssText = "position:fixed; opacity:0;";
+  document.body.appendChild(ta); ta.select(); ta.setSelectionRange(0, text.length);
+  let ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta);
+  ok ? done() : toast("คัดลอกไม่ได้ กดค้างที่รหัสเพื่อคัดลอกเอง");
 }
 function shareSyncCode(){
   const cfg = getSync(); if(!cfg) return;
