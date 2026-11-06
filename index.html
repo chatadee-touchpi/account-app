@@ -391,6 +391,12 @@
   .home-payers{background:#fff; border:1px solid var(--border); border-radius:16px; padding:12px 16px 10px; margin-bottom:16px;}
   .join-link{margin-top:12px; background:none; border:none; color:var(--brand-dark); font-weight:700; font-size:14px; cursor:pointer; font-family:inherit; padding:8px;}
   .narrow-form{width:100%; max-width:320px;}
+  .device-card{width:100%; max-width:360px; display:flex; align-items:center; gap:12px; text-align:left; background:#fff; border:1.5px solid var(--brand); border-radius:14px; padding:12px 14px; margin-bottom:16px;}
+  .device-card.on{border-color:var(--border); background:var(--brand-light);}
+  .device-card .txt{flex:1; font-size:13px; line-height:1.45; color:var(--text);}
+  .device-card .txt b{display:block; font-size:14px; color:var(--ink);}
+  .device-card .btn{padding:8px 14px; font-size:13px; white-space:nowrap;}
+  .pw-show{font-family:'Fraunces',serif; font-size:18px; font-weight:600; letter-spacing:1px; text-align:center; background:var(--paper); border-radius:10px; padding:8px; margin:4px 0 10px; user-select:all;}
   .name-row{display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border);}
   .name-row .payer-dot{flex-shrink:0;}
   .name-row .nr-main{flex:1; min-width:0;}
@@ -469,10 +475,10 @@
       <div class="logo">💸</div>
       <div class="brand-title">Chatawut Touchpi</div>
       <div class="brand-sub">EXPENSE TRACKER</div>
-      <p style="color:var(--muted); margin-bottom:22px; font-size:14px;">เลือกโปรไฟล์ของคุณ — ข้อมูลแต่ละคนแยกเก็บกันในเครื่องนี้</p>
+      <p style="color:var(--muted); margin-bottom:18px; font-size:14px;">เลือกโปรไฟล์ของคุณ</p>
+      <div class="device-card" id="deviceCard"></div>
       <div class="profile-list" id="profileList"></div>
       <button class="btn block" style="max-width:360px;" onclick="showCreateProfile()">+ สร้างโปรไฟล์ใหม่</button>
-      <button class="join-link" onclick="showScreen('screen-joinprofile')">🔗 เคยใช้ในเครื่องอื่นแล้ว? ดึงข้อมูลมาใช้ต่อ</button>
     </div>
   </div>
 
@@ -720,7 +726,8 @@
 
       <div class="set-title">ซิงค์ข้ามเครื่อง</div>
       <div class="set-group">
-        <button class="set-row" onclick="openSyncModal()"><span class="set-ic">☁️</span><span class="set-lbl">ซิงค์ / ใช้ร่วมกับคนอื่น<small id="setSyncSub">ปิดอยู่</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="openDeviceModal()"><span class="set-ic">📱</span><span class="set-lbl">เชื่อมเครื่องนี้กับเครื่องอื่น<small id="setDeviceSub">ปิดอยู่</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="openSyncModal()"><span class="set-ic">👥</span><span class="set-lbl">แชร์โปรไฟล์นี้กับเพื่อน<small id="setSyncSub">ปิดอยู่</small></span><span class="chev">›</span></button>
       </div>
 
       <div class="set-title">สำรองข้อมูล</div>
@@ -829,6 +836,11 @@
         <button class="btn block" onclick="shareSplit()">📤 แชร์</button>
       </div>
     </div>
+  </div>
+
+  <!-- Modal: device link -->
+  <div class="modal-overlay" id="deviceModal">
+    <div class="modal-sheet" id="deviceSheet"></div>
   </div>
 
   <!-- Modal: sync -->
@@ -1005,6 +1017,7 @@ function fmtMoney(n){
 
 /* ---------- PROFILE SELECT ---------- */
 function renderProfileList(){
+  renderDeviceUi();
   const list = document.getElementById("profileList");
   list.innerHTML = "";
   if(profiles.length === 0){
@@ -1034,7 +1047,7 @@ function createProfile(){
   const pin = document.getElementById("newProfilePin").value.trim();
   if(!name){ toast("กรุณาใส่ชื่อ"); return; }
   if(!/^\d{4}$/.test(pin)){ toast("PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
-  const p = { id: uid(), name, pin };
+  const p = { id: uid(), name, pin, updatedAt: Date.now() };
   profiles.push(p);
   saveProfiles();
   const cur = document.getElementById("newProfileCurrency").value || "THB";
@@ -1042,14 +1055,21 @@ function createProfile(){
   localStorage.setItem("expapp_data_" + p.id, JSON.stringify(data));
   toast("สร้างโปรไฟล์สำเร็จ");
   renderProfileList();
+  deviceSync();
   openPinScreen(p.id);
 }
 function deleteProfile(id){
-  if(!confirm("ลบโปรไฟล์นี้? ข้อมูลทั้งหมดในโปรไฟล์นี้จะหายไป")) return;
+  const linked = !!getDeviceLink();
+  if(!confirm(linked ? "ลบโปรไฟล์นี้? จะถูกลบจากทุกเครื่องที่เชื่อมกันด้วย" : "ลบโปรไฟล์นี้? ข้อมูลทั้งหมดในโปรไฟล์นี้จะหายไป")) return;
+  removeProfileLocal(id);
+  if(linked){ const dl = getDeviceLink(); dl.tomb = dl.tomb || {}; dl.tomb[id] = Date.now(); saveDeviceLink(dl); deviceSync(); }
+  renderProfileList();
+}
+function removeProfileLocal(id){
   profiles = profiles.filter(p => p.id !== id);
   saveProfiles();
   localStorage.removeItem("expapp_data_" + id);
-  renderProfileList();
+  saveSyncCfgFor(id, null);
 }
 
 /* ---------- PIN SCREEN ---------- */
@@ -1131,7 +1151,7 @@ function login(p){
   checkDailyBackup();
   lastSettingsSig = settingsSig(currentData);
   renderSyncStatus();
-  syncNow();
+  if(getDeviceLink()) deviceSync(); else syncNow();
 }
 function changeCurrency(){
   currentData.currency = document.getElementById("currencySelect").value;
@@ -1446,8 +1466,10 @@ function deleteTransaction(){
 // Paste the Apps Script /exec URL here after deploying. Can also be set per device in the sync screen.
 const DEFAULT_SYNC_URL = "https://script.google.com/macros/s/AKfycbzAGLtLXEshhKaqc8bqxjgLaW8ZKh4XHLjFCJ6U9qHeK7d603J3rztQlMRnKLus99Daew/exec";
 function syncUrl(){ try{ return localStorage.getItem("expapp_sync_url") || DEFAULT_SYNC_URL; }catch(e){ return DEFAULT_SYNC_URL; } }
-function getSync(){ if(!currentProfile) return null; try{ return JSON.parse(localStorage.getItem("expapp_sync_" + currentProfile.id) || "null"); }catch(e){ return null; } }
-function saveSyncCfg(cfg){ try{ cfg ? localStorage.setItem("expapp_sync_" + currentProfile.id, JSON.stringify(cfg)) : localStorage.removeItem("expapp_sync_" + currentProfile.id); }catch(e){} }
+function getSyncFor(pid){ try{ return JSON.parse(localStorage.getItem("expapp_sync_" + pid) || "null"); }catch(e){ return null; } }
+function saveSyncCfgFor(pid, cfg){ try{ cfg ? localStorage.setItem("expapp_sync_" + pid, JSON.stringify(cfg)) : localStorage.removeItem("expapp_sync_" + pid); }catch(e){} }
+function getSync(){ return currentProfile ? getSyncFor(currentProfile.id) : null; }
+function saveSyncCfg(cfg){ if(currentProfile) saveSyncCfgFor(currentProfile.id, cfg); }
 
 const SYNC_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 function newGroupCode(){
@@ -1620,15 +1642,279 @@ function renderSyncStatus(){
   const cfg = getSync();
   const chip = document.getElementById("syncChip"), sub = document.getElementById("setSyncSub");
   if(!chip || !sub) return;
-  if(!cfg){ chip.style.display = "none"; sub.textContent = "ปิดอยู่ · ใช้หลายเครื่องหรือแชร์ทริปกับเพื่อน"; }
+  const dsub = document.getElementById("setDeviceSub"), dl = getDeviceLink();
+  if(dsub) dsub.textContent = dl ? `เชื่อมแล้ว · ทุกโปรไฟล์ซิงค์อัตโนมัติ` : "ปิดอยู่ · ใช้หลายเครื่องโดยเห็นทุกโปรไฟล์";
+  if(!cfg){ chip.style.display = "none"; sub.textContent = "ปิดอยู่ · ใช้บัญชีทริปร่วมกับเพื่อน"; }
   else {
     chip.style.display = "inline-flex";
     chip.classList.toggle("err", syncState.status === "err");
     chip.textContent = syncState.status === "busy" ? "☁️ กำลังซิงค์..." : syncState.status === "err" ? "⚠️ ซิงค์ไม่สำเร็จ" : "☁️ ซิงค์แล้ว";
-    sub.textContent = `กลุ่ม ${fmtCode(cfg.code)} · ซิงค์ล่าสุด ${timeAgo(cfg.lastSync)}`;
+    sub.textContent = `รหัส ${fmtCode(cfg.code)} · ซิงค์ล่าสุด ${timeAgo(cfg.lastSync)}`;
   }
   // Only refresh the sheet when it shows live status; never wipe a form the person is typing in.
   if(cfg && document.getElementById("syncModal").classList.contains("active")) renderSyncModal();
+}
+
+/* ---------- DEVICE LINK: every profile on this device follows to linked devices ---------- */
+// One encrypted "manifest" lists the profiles (name, PIN, and each profile's own sync keys).
+// Profile data still syncs through each profile's own group, so a profile can also be shared with friends.
+const DEVICE_LINK_KEY = "expapp_device_link";
+function getDeviceLink(){ try{ return JSON.parse(localStorage.getItem(DEVICE_LINK_KEY) || "null"); }catch(e){ return null; } }
+function saveDeviceLink(v){ try{ v ? localStorage.setItem(DEVICE_LINK_KEY, JSON.stringify(v)) : localStorage.removeItem(DEVICE_LINK_KEY); }catch(e){} }
+function touchProfile(){
+  if(!currentProfile) return;
+  currentProfile.updatedAt = Date.now();
+  const i = profiles.findIndex(p => p.id === currentProfile.id);
+  if(i >= 0) profiles[i] = currentProfile;
+  saveProfiles();
+  deviceSync();
+}
+async function deriveDeviceKeys(code, password){
+  // Different id namespace from profile groups, same password-derived encryption
+  const k = await deriveSyncKeys("DEVICE" + normCode(code), password);
+  k.code = normCode(code);
+  return k;
+}
+function randomPassword(){
+  const r = crypto.getRandomValues(new Uint8Array(10));
+  return [...r].map(b => SYNC_ALPHABET[b % SYNC_ALPHABET.length]).join("").toLowerCase();
+}
+async function ensureProfileGroups(){
+  for(const p of profiles){
+    if(getSyncFor(p.id)) continue;
+    const code = newGroupCode(), pass = randomPassword();
+    const cfg = await deriveSyncKeys(code, pass);
+    cfg.autoPass = pass; cfg.lastSync = 0;
+    saveSyncCfgFor(p.id, cfg);
+  }
+}
+function localManifest(dl){
+  return { profiles: profiles.map(p => ({ id:p.id, name:p.name, pin:p.pin, updatedAt:p.updatedAt || 0, cfg:getSyncFor(p.id) })), tomb: dl.tomb || {} };
+}
+function mergeManifest(local, remote){
+  const tomb = {};
+  [remote.tomb || {}, local.tomb || {}].forEach(m => Object.entries(m).forEach(([k,v]) => { tomb[k] = Math.max(v, tomb[k] || 0); }));
+  const map = {};
+  [...(remote.profiles || []), ...(local.profiles || [])].forEach(e => {
+    const cur = map[e.id];
+    if(!cur || (e.updatedAt || 0) >= (cur.updatedAt || 0)) map[e.id] = Object.assign({}, e, { cfg: e.cfg || (cur && cur.cfg) || null });
+    else if(!cur.cfg && e.cfg) cur.cfg = e.cfg;
+  });
+  // Keep local order, then profiles that only exist elsewhere
+  const order = [...(local.profiles || []).map(e => e.id), ...(remote.profiles || []).map(e => e.id)];
+  const seen = new Set(), list = [];
+  order.forEach(id => { if(seen.has(id)) return; seen.add(id); const e = map[id]; if(e && !(tomb[id] && tomb[id] >= (e.updatedAt || 0))) list.push(e); });
+  return { profiles: list, tomb };
+}
+let devBusy = false, devAgain = false, devState = { status:"idle", msg:"" };
+async function deviceSync(manual){
+  const dl = getDeviceLink();
+  if(!dl || !syncUrl()) return;
+  if(devBusy){ devAgain = true; return; }
+  devBusy = true; devState = { status:"busy", msg:"" }; renderDeviceUi();
+  try{
+    await ensureProfileGroups();
+    for(let attempt = 0; attempt < 4; attempt++){
+      const pulled = await syncApi({ action:"pull", id:dl.id, auth:dl.auth });
+      if(!pulled.ok) throw new Error(pulled.error);
+      const remote = pulled.exists ? await decryptBlob(dl, pulled.blob) : { profiles:[], tomb:{} };
+      const local = localManifest(dl);
+      const merged = mergeManifest(local, remote);
+      // Apply to this device
+      const keep = new Set(merged.profiles.map(e => e.id));
+      profiles.filter(p => !keep.has(p.id)).forEach(p => {
+        if(currentProfile && currentProfile.id === p.id){ logout(); toast(`โปรไฟล์ "${p.name}" ถูกลบจากเครื่องอื่น`); }
+        removeProfileLocal(p.id);
+      });
+      merged.profiles.forEach(e => {
+        let p = profiles.find(x => x.id === e.id);
+        if(!p){
+          p = { id:e.id, name:e.name, pin:e.pin, updatedAt:e.updatedAt };
+          profiles.push(p);
+          if(!localStorage.getItem("expapp_data_" + e.id))
+            localStorage.setItem("expapp_data_" + e.id, JSON.stringify({ transactions:[], categories:{ EXPENSE:[...DEFAULT_CATS.EXPENSE], INCOME:[...DEFAULT_CATS.INCOME] }, currency:"THB", payers:[...DEFAULT_PAYERS], tripPromptDismissed:true, catsV2:true, settingsUpdatedAt:-1 }));
+        } else if((e.updatedAt || 0) > (p.updatedAt || 0)){
+          p.name = e.name; p.pin = e.pin; p.updatedAt = e.updatedAt;
+          if(currentProfile && currentProfile.id === p.id) Object.assign(currentProfile, p);
+        }
+        const mine = getSyncFor(e.id);
+        if(e.cfg && (!mine || mine.id !== e.cfg.id) && (e.updatedAt || 0) >= (p.updatedAt || 0)) saveSyncCfgFor(e.id, Object.assign({}, e.cfg, { lastSync:0 }));
+      });
+      saveProfiles();
+      dl.tomb = merged.tomb;
+      const remoteChanged = !pulled.exists || JSON.stringify(merged) !== JSON.stringify(mergeManifest(remote, remote));
+      if(remoteChanged){
+        const pushed = await syncApi({ action:"push", id:dl.id, auth:dl.auth, baseRev: pulled.rev || 0, blob: await encryptBlob(dl, merged) });
+        if(!pushed.ok){ if(pushed.error === "conflict") continue; throw new Error(pushed.error); }
+      }
+      dl.lastSync = Date.now();
+      saveDeviceLink(dl);
+      devState = { status:"ok", msg:"" };
+      if(document.getElementById("screen-profiles").classList.contains("active")) renderProfileList();
+      for(const p of [...profiles]){
+        if(currentProfile && currentProfile.id === p.id) continue;
+        try{ await syncProfileBackground(p.id); }catch(e){ /* retried on the next round */ }
+      }
+      if(currentProfile) syncNow();
+      if(manual) toast("เชื่อมเครื่องเรียบร้อย");
+      return;
+    }
+    throw new Error("conflict");
+  }catch(e){
+    const m = String(e && e.message || e);
+    devState = { status:"err", msg: m === "auth" ? "รหัสผ่านไม่ถูกต้อง" : navigator.onLine === false ? "ออฟไลน์อยู่ จะลองใหม่อัตโนมัติ" : "เชื่อมไม่สำเร็จ จะลองใหม่อัตโนมัติ" };
+    if(manual) toast(devState.msg);
+  }finally{
+    devBusy = false; renderDeviceUi(); renderSyncStatus();
+    if(devAgain){ devAgain = false; setTimeout(() => deviceSync(), 800); }
+  }
+}
+
+// Sync the data of a profile that is not currently open (same rules as syncNow)
+async function syncProfileBackground(pid){
+  const cfg = getSyncFor(pid);
+  if(!cfg) return;
+  let data;
+  try{ data = JSON.parse(localStorage.getItem("expapp_data_" + pid) || "null"); }catch(e){ data = null; }
+  if(!data) return;
+  for(let attempt = 0; attempt < 4; attempt++){
+    const pulled = await syncApi({ action:"pull", id:cfg.id, auth:cfg.auth });
+    if(!pulled.ok) throw new Error(pulled.error);
+    const remote = pulled.exists ? await decryptBlob(cfg, pulled.blob) : null;
+    const merged = remote ? mergeData(data, remote) : data;
+    if(JSON.stringify(syncPayload(merged)) !== JSON.stringify(syncPayload(data))){
+      data = Object.assign(data, merged);
+      if(currentProfile && currentProfile.id === pid) return; // opened meanwhile: let syncNow handle it
+      localStorage.setItem("expapp_data_" + pid, JSON.stringify(data));
+    }
+    if(!remote || JSON.stringify(syncPayload(merged)) !== JSON.stringify(syncPayload(remote))){
+      const pushed = await syncApi({ action:"push", id:cfg.id, auth:cfg.auth, baseRev: pulled.rev || 0, blob: await encryptBlob(cfg, syncPayload(merged)) });
+      if(!pushed.ok){ if(pushed.error === "conflict") continue; throw new Error(pushed.error); }
+    }
+    cfg.lastSync = Date.now(); saveSyncCfgFor(pid, cfg);
+    return;
+  }
+}
+
+/* --- Device link UI --- */
+let devView = "home", devDraftCode = "";
+function renderDeviceUi(){
+  const card = document.getElementById("deviceCard"), dl = getDeviceLink();
+  if(card){
+    card.className = "device-card" + (dl ? " on" : "");
+    card.innerHTML = dl
+      ? `<div class="txt"><b>☁️ เชื่อมกับเครื่องอื่นแล้ว</b>${devState.status === "busy" ? "กำลังซิงค์..." : devState.status === "err" ? escapeHtml(devState.msg) : "ทุกโปรไฟล์ซิงค์อัตโนมัติ · " + timeAgo(dl.lastSync)}</div><button class="btn secondary" onclick="openDeviceModal()">จัดการ</button>`
+      : `<div class="txt"><b>📱 ใช้หลายเครื่องไหม?</b>เชื่อมเครื่องนี้ ทุกโปรไฟล์จะขึ้นในเครื่องอื่นด้วย</div><button class="btn" onclick="openDeviceModal()">เชื่อม</button>`;
+  }
+  if(document.getElementById("deviceModal").classList.contains("active") && devView === "home") renderDeviceModal();
+}
+function openDeviceModal(){ devView = "home"; renderDeviceModal(); document.getElementById("deviceModal").classList.add("active"); }
+function closeDeviceModal(){ document.getElementById("deviceModal").classList.remove("active"); }
+function renderDeviceModal(){
+  const el = document.getElementById("deviceSheet"), dl = getDeviceLink();
+  if(dl){
+    el.innerHTML = `<h3>เชื่อมเครื่องนี้กับเครื่องอื่น</h3>
+      <p style="font-size:13px; color:var(--muted);">รหัสเชื่อมเครื่อง</p>
+      <div class="sync-code">${fmtCode(dl.code)}</div>
+      <button class="btn secondary block" style="margin-bottom:10px;" onclick="copyText('${fmtCode(dl.code)}')">📋 คัดลอกรหัส</button>
+      <p style="font-size:12.5px; color:var(--muted); line-height:1.6;">ในเครื่องอื่น เปิดแอป กด <b>เชื่อม</b> ที่หน้าเลือกโปรไฟล์ แล้วใส่รหัสนี้กับรหัสผ่านที่ตั้งไว้ <b>ใช้กับเครื่องของคุณเองเท่านั้น</b> (ถ้าจะใช้กับเพื่อน ให้แชร์เป็นรายโปรไฟล์ในตั้งค่า)</p>
+      <div class="set-group sheet-list">
+        <div class="set-row" style="cursor:default;"><span class="set-ic">${devState.status === "err" ? "⚠️" : "✅"}</span><span class="set-lbl">${devState.status === "busy" ? "กำลังซิงค์..." : devState.status === "err" ? escapeHtml(devState.msg) : "เชื่อมอยู่ " + profiles.length + " โปรไฟล์"}<small>ซิงค์ล่าสุด ${timeAgo(dl.lastSync)}</small></span></div>
+        <button class="set-row" onclick="deviceSync(true)"><span class="set-ic">🔄</span><span class="set-lbl">ซิงค์ตอนนี้</span><span class="chev">›</span></button>
+        <button class="set-row danger" onclick="unlinkDevice()"><span class="set-ic">⏸️</span><span class="set-lbl">ปิดการเชื่อมเครื่องนี้<small>หยุดซิงค์ทุกโปรไฟล์ในเครื่องนี้ ข้อมูลในเครื่องยังอยู่ครบ</small></span></button>
+      </div>
+      <button class="btn secondary block" onclick="closeDeviceModal()">ปิด</button>`;
+    return;
+  }
+  if(devView === "create"){
+    el.innerHTML = `<h3>เชื่อมเครื่องนี้ (ครั้งแรก)</h3>
+      <p style="font-size:13px; color:var(--muted);">รหัสเชื่อมเครื่อง (สุ่มให้แล้ว)</p>
+      <div class="sync-code">${fmtCode(devDraftCode)}</div>
+      <div class="field"><label>ตั้งรหัสผ่าน (อย่างน้อย 6 ตัว)</label><input type="password" id="devPass1" autocomplete="new-password"></div>
+      <div class="field"><label>ยืนยันรหัสผ่าน</label><input type="password" id="devPass2" autocomplete="new-password"></div>
+      <div class="sync-warn">🔐 ข้อมูลทุกโปรไฟล์ถูกเข้ารหัสด้วยรหัสผ่านนี้ ไม่มีใครอ่านได้ รวมทั้งผู้ดูแลแอป <b>ถ้าลืมรหัสผ่าน จะเชื่อมเครื่องใหม่ไม่ได้</b></div>
+      <label class="check-row"><input type="checkbox" id="devAck"> <span>จดรหัสเชื่อมเครื่องและรหัสผ่านไว้แล้ว</span></label>
+      <div class="row-gap"><button class="btn secondary block" onclick="devView='home'; renderDeviceModal();">ย้อนกลับ</button><button class="btn block" id="devGo" onclick="createDeviceLink()">เชื่อม</button></div>`;
+    return;
+  }
+  if(devView === "join"){
+    el.innerHTML = `<h3>เชื่อมกับเครื่องที่ใช้อยู่</h3>
+      <div class="field"><label>รหัสเชื่อมเครื่อง (ดูได้ในเครื่องแรก)</label><input type="text" id="devJoinCode" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off"></div>
+      <div class="field"><label>รหัสผ่าน</label><input type="password" id="devJoinPass" autocomplete="current-password"></div>
+      <div class="sync-warn">ทุกโปรไฟล์จากเครื่องแรกจะขึ้นในเครื่องนี้ (ใช้ PIN เดิม) และโปรไฟล์ในเครื่องนี้จะไปขึ้นที่เครื่องแรกด้วย</div>
+      <div class="row-gap"><button class="btn secondary block" onclick="devView='home'; renderDeviceModal();">ย้อนกลับ</button><button class="btn block" id="devGo" onclick="joinDeviceLink()">เชื่อม</button></div>`;
+    return;
+  }
+  el.innerHTML = `<h3>เชื่อมเครื่องนี้กับเครื่องอื่น</h3>
+    <p style="font-size:13px; color:var(--muted); line-height:1.6;">เปิดครั้งเดียว ทุกโปรไฟล์ในเครื่องนี้ (รวมที่สร้างใหม่ทีหลัง) จะขึ้นในมือถือ แท็บเล็ต หรือคอมของคุณที่เชื่อมไว้ ข้อมูลถูกเข้ารหัสก่อนส่ง</p>
+    <div class="sync-pick">
+      <button class="btn block" onclick="devDraftCode=newGroupCode(); devView='create'; renderDeviceModal();">✨ เครื่องแรก: เริ่มเชื่อม</button>
+      <button class="btn secondary block" onclick="devView='join'; renderDeviceModal();">🔑 มีเครื่องที่เชื่อมไว้แล้ว</button>
+    </div>
+    <button class="btn secondary block" onclick="closeDeviceModal()">ปิด</button>`;
+}
+async function startDeviceLink(code, password, mustExist){
+  const btn = document.getElementById("devGo");
+  if(btn){ btn.disabled = true; btn.textContent = "กำลังเชื่อม..."; }
+  try{
+    if(!syncUrl()) throw new Error("no_server");
+    const dl = await deriveDeviceKeys(code, password);
+    const probe = await syncApi({ action:"pull", id:dl.id, auth:dl.auth });
+    if(!probe.ok) throw new Error(probe.error);
+    if(mustExist && !probe.exists){
+      // Maybe they typed a per-profile share code: offer that path instead
+      const g = await deriveSyncKeys(code, password);
+      const gp = await syncApi({ action:"pull", id:g.id, auth:g.auth });
+      throw new Error(gp.ok && gp.exists ? "is_profile_code" : "not_found");
+    }
+    if(!mustExist && probe.exists) throw new Error("exists");
+    if(probe.exists) await decryptBlob(dl, probe.blob);
+    dl.tomb = {}; dl.lastSync = 0;
+    saveDeviceLink(dl);
+    devView = "home";
+    await deviceSync();
+    renderDeviceModal();
+    toast(mustExist ? "เชื่อมแล้ว ดึงโปรไฟล์มาให้แล้ว" : "เชื่อมเครื่องนี้แล้ว");
+  }catch(e){
+    const m = String(e && e.message || e);
+    if(m === "is_profile_code"){
+      closeDeviceModal();
+      document.getElementById("joinCode").value = fmtCode(code);
+      document.getElementById("joinPass").value = password;
+      showScreen("screen-joinprofile");
+      toast("รหัสนี้เป็นรหัสแชร์ของโปรไฟล์ ตั้งชื่อและ PIN สำหรับเครื่องนี้");
+    } else {
+      toast(m === "auth" ? "รหัสผ่านไม่ถูกต้อง" : m === "not_found" ? "ไม่พบรหัสนี้ ตรวจสอบอีกครั้ง" : m === "exists" ? "รหัสนี้ถูกใช้แล้ว กดย้อนกลับแล้วเริ่มใหม่" : "เชื่อมไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต");
+    }
+    if(btn){ btn.disabled = false; btn.textContent = "เชื่อม"; }
+  }
+}
+function createDeviceLink(){
+  const p1 = document.getElementById("devPass1").value, p2 = document.getElementById("devPass2").value;
+  if(p1.length < 6){ toast("รหัสผ่านต้องมีอย่างน้อย 6 ตัว"); return; }
+  if(p1 !== p2){ toast("รหัสผ่านทั้งสองช่องไม่ตรงกัน"); return; }
+  if(!document.getElementById("devAck").checked){ toast("กรุณาจดรหัสไว้ก่อน แล้วติ๊กยืนยัน"); return; }
+  startDeviceLink(devDraftCode, p1, false);
+}
+function joinDeviceLink(){
+  const code = normCode(document.getElementById("devJoinCode").value), pass = document.getElementById("devJoinPass").value;
+  if(code.length !== 12){ toast("รหัสต้องมี 12 ตัว เช่น ABCD-EFGH-JKMN"); return; }
+  if(!pass){ toast("กรุณาใส่รหัสผ่าน"); return; }
+  startDeviceLink(code, pass, true);
+}
+function unlinkDevice(){
+  if(!confirm("ปิดการเชื่อมเครื่องนี้? ทุกโปรไฟล์ในเครื่องนี้จะหยุดซิงค์ ข้อมูลในเครื่องยังอยู่ครบ และเชื่อมใหม่ได้ด้วยรหัสเดิม")) return;
+  saveDeviceLink(null);
+  profiles.forEach(p => saveSyncCfgFor(p.id, null));
+  devState = { status:"idle", msg:"" };
+  setSyncState("idle", "");
+  renderDeviceUi(); renderDeviceModal();
+  toast("ปิดการเชื่อมแล้ว");
+}
+function copyText(text){
+  const done = () => toast("คัดลอกแล้ว: " + text);
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopy(text, done));
+  else fallbackCopy(text, done);
 }
 
 /* --- Sync screen (bottom sheet) --- */
@@ -1655,19 +1941,22 @@ function renderSyncModal(){
       <button class="btn secondary block" style="margin-top:12px;" onclick="closeSyncModal()">ปิด</button>`;
     return;
   }
-  if(cfg){
-    el.innerHTML = `<h3>ซิงค์ข้ามเครื่อง</h3>
-      <p style="font-size:13px; color:var(--muted);">รหัสกลุ่มของคุณ</p>
+  if(cfg && syncView === "join"){ /* fall through to join form below */ }
+  else if(cfg){
+    el.innerHTML = `<h3>แชร์โปรไฟล์นี้กับเพื่อน</h3>
+      <p style="font-size:13px; color:var(--muted);">รหัสกลุ่มของโปรไฟล์ "${escapeHtml(currentProfile.name)}"</p>
       <div class="sync-code">${fmtCode(cfg.code)}</div>
       <div class="row-gap" style="margin-bottom:10px;">
         <button class="btn secondary block" onclick="copySyncCode()">📋 คัดลอกรหัส</button>
         <button class="btn block" onclick="shareSyncCode()">📤 ส่งให้คนอื่น</button>
       </div>
-      <p style="font-size:12.5px; color:var(--muted); line-height:1.6;">ใช้ <b>รหัสกลุ่มนี้ + รหัสผ่านเดิม</b> ในเครื่องอื่น หรือส่งให้คนที่จะใช้บัญชีนี้ร่วมกัน (บอกรหัสผ่านแยกต่างหาก)</p>
+      ${cfg.autoPass ? `<p style="font-size:13px; color:var(--muted);">รหัสผ่าน (สร้างอัตโนมัติ)</p><div class="pw-show">${escapeHtml(cfg.autoPass)}</div>` : ""}
+      <p style="font-size:12.5px; color:var(--muted); line-height:1.6;">เพื่อนเข้าร่วมได้ที่ ตั้งค่า > แชร์โปรไฟล์นี้กับเพื่อน > เข้าร่วมกลุ่มของเพื่อน ด้วย <b>รหัสกลุ่ม + รหัสผ่าน</b> เพื่อนจะเห็นเฉพาะโปรไฟล์นี้ ไม่เห็นโปรไฟล์อื่น (บอกรหัสผ่านแยกต่างหาก)</p>
       <div class="set-group sheet-list">
         <div class="set-row" style="cursor:default;"><span class="set-ic">${syncState.status === "err" ? "⚠️" : "✅"}</span><span class="set-lbl">${syncState.status === "busy" ? "กำลังซิงค์..." : syncState.status === "err" ? escapeHtml(syncState.msg) : "ซิงค์เรียบร้อย"}<small>ซิงค์ล่าสุด ${timeAgo(cfg.lastSync)}</small></span></div>
         <button class="set-row" onclick="syncNow(true)"><span class="set-ic">🔄</span><span class="set-lbl">ซิงค์ตอนนี้</span><span class="chev">›</span></button>
-        <button class="set-row danger" onclick="leaveSync()"><span class="set-ic">🚪</span><span class="set-lbl">หยุดซิงค์ในเครื่องนี้<small>ข้อมูลในเครื่องและในกลุ่มยังอยู่ครบ</small></span></button>
+        <button class="set-row" onclick="syncView='join'; renderSyncModal();"><span class="set-ic">🔑</span><span class="set-lbl">เข้าร่วมกลุ่มของเพื่อนแทน<small>รายการในโปรไฟล์นี้จะรวมเข้ากับกลุ่มของเพื่อน</small></span><span class="chev">›</span></button>
+        ${getDeviceLink() ? "" : `<button class="set-row danger" onclick="leaveSync()"><span class="set-ic">🚪</span><span class="set-lbl">หยุดซิงค์ในเครื่องนี้<small>ข้อมูลในเครื่องและในกลุ่มยังอยู่ครบ</small></span></button>`}
       </div>
       <button class="btn secondary block" onclick="closeSyncModal()">ปิด</button>`;
     return;
@@ -1684,18 +1973,18 @@ function renderSyncModal(){
     return;
   }
   if(syncView === "join"){
-    el.innerHTML = `<h3>เข้าร่วมกลุ่ม</h3>
+    el.innerHTML = `<h3>เข้าร่วมกลุ่มของเพื่อน</h3>
       <div class="field"><label>รหัสกลุ่ม</label><input type="text" id="syncJoinCode" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off"></div>
       <div class="field"><label>รหัสผ่าน</label><input type="password" id="syncJoinPass" autocomplete="current-password"></div>
       <div class="sync-warn">รายการที่มีอยู่ในเครื่องนี้จะถูกรวมเข้ากับข้อมูลของกลุ่ม</div>
       <div class="row-gap"><button class="btn secondary block" onclick="syncView='home'; renderSyncModal();">ย้อนกลับ</button><button class="btn block" id="syncGo" onclick="joinSyncGroup()">เข้าร่วม</button></div>`;
     return;
   }
-  el.innerHTML = `<h3>ซิงค์ข้ามเครื่อง</h3>
-    <p style="font-size:13px; color:var(--muted); line-height:1.6;">ใช้ข้อมูลเดียวกันได้หลายเครื่อง หรือใช้บัญชีร่วมกับเพื่อนในทริป ข้อมูลถูกเข้ารหัสก่อนส่งขึ้นคลาวด์</p>
+  el.innerHTML = `<h3>แชร์โปรไฟล์นี้กับเพื่อน</h3>
+    <p style="font-size:13px; color:var(--muted); line-height:1.6;">ใช้บัญชีโปรไฟล์นี้ร่วมกับเพื่อนในทริป เพื่อนเห็นเฉพาะโปรไฟล์นี้ ข้อมูลถูกเข้ารหัสก่อนส่งขึ้นคลาวด์</p>
     <div class="sync-pick">
       <button class="btn block" onclick="syncDraftCode=newGroupCode(); syncView='create'; renderSyncModal();">✨ สร้างกลุ่มใหม่</button>
-      <button class="btn secondary block" onclick="syncView='join'; renderSyncModal();">🔑 เข้าร่วมกลุ่มที่มีอยู่</button>
+      <button class="btn secondary block" onclick="syncView='join'; renderSyncModal();">🔑 เข้าร่วมกลุ่มของเพื่อน</button>
     </div>
     <button class="btn secondary block" onclick="closeSyncModal()">ปิด</button>
     ${syncServerBlock()}`;
@@ -1712,6 +2001,7 @@ async function startSync(code, password, mustExist){
     if(probe.exists) await decryptBlob(cfg, probe.blob); // confirms the password before connecting
     cfg.lastSync = 0;
     saveSyncCfg(cfg);
+    touchProfile();
     syncView = "home";
     renderSyncModal();
     await syncNow();
@@ -1739,6 +2029,7 @@ function joinSyncGroup(){
 function leaveSync(){
   if(!confirm("หยุดซิงค์ในเครื่องนี้? ข้อมูลในเครื่องยังอยู่ และกลับมาเข้าร่วมใหม่ได้ด้วยรหัสกลุ่มและรหัสผ่านเดิม")) return;
   saveSyncCfg(null); setSyncState("idle", ""); toast("หยุดซิงค์แล้ว");
+  touchProfile();
 }
 function copySyncCode(){
   const cfg = getSync(); if(!cfg) return;
@@ -1759,7 +2050,7 @@ function fallbackCopy(text, done){
 }
 function shareSyncCode(){
   const cfg = getSync(); if(!cfg) return;
-  const text = `เข้าร่วมบัญชีของฉันใน Chatawut Touchpi Expense Tracker\n${location.href.split("?")[0]}\n\nตั้งค่า > ซิงค์ > เข้าร่วมกลุ่มที่มีอยู่\nรหัสกลุ่ม: ${fmtCode(cfg.code)}\n(รหัสผ่านจะบอกแยกต่างหาก)`;
+  const text = `เข้าร่วมบัญชี "${currentProfile.name}" ใน Chatawut Touchpi Expense Tracker\n${location.href.split("?")[0]}\n\nสร้างโปรไฟล์ แล้วไปที่ ตั้งค่า > แชร์โปรไฟล์นี้กับเพื่อน > เข้าร่วมกลุ่มของเพื่อน\nรหัสกลุ่ม: ${fmtCode(cfg.code)}\n(รหัสผ่านจะบอกแยกต่างหาก)`;
   if(navigator.share) navigator.share({ text }).catch(()=>{});
   else if(navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast("คัดลอกแล้ว")).catch(() => toast("คัดลอกไม่สำเร็จ"));
 }
@@ -1881,7 +2172,11 @@ async function joinFromOtherDevice(){
 }
 
 // Keep devices in step while the app stays open
-setInterval(() => { if(currentProfile && document.visibilityState === "visible" && getSync()) syncNow(); }, 60000);
+setInterval(() => {
+  if(document.visibilityState !== "visible") return;
+  if(getDeviceLink()) deviceSync();
+  else if(currentProfile && getSync()) syncNow();
+}, 60000);
 
 /* ---------- UI helpers ---------- */
 function openShareSheet(){ document.getElementById("shareModal").classList.add("active"); }
@@ -2099,7 +2394,7 @@ function buildSplitText(){
     lines.push(`* ยอดรวมนี้มีรายจ่ายไม่ระบุผู้จ่าย ${fmtMoney(r.unassigned)}`);
   }
   lines.push("");
-  lines.push("— Chatawut Touchpi Expense Tracker");
+  lines.push("Chatawut Touchpi Expense Tracker");
   return lines.join("\n");
 }
 function shareSplit(){
@@ -2354,7 +2649,7 @@ function renderCategoryBreakdown(rangeTx, total){
 
 /* ---------- SHARE (text / image) ---------- */
 function txLine(t, withDate){
-  // "อาหาร - ข้าวมันไก่ ฿200.00 (A)"  — category, note, amount, payer
+  // "อาหาร - ข้าวมันไก่ ฿200.00 (A)": category, note, amount, payer
   const date = withDate ? new Date(t.date).toLocaleDateString('th-TH',{day:'numeric',month:'short'}) + " " : "";
   const note = t.note ? ` - ${t.note}` : "";
   const payer = t.payer ? ` (${t.payer})` : "";
@@ -2392,7 +2687,7 @@ function buildShareText(){
     if(pt[""]) lines.push(`ไม่ระบุ ${fmtMoney(pt[""])}`);
   }
   lines.push("");
-  lines.push("— Chatawut Touchpi Expense Tracker");
+  lines.push("Chatawut Touchpi Expense Tracker");
   return lines.join("\n");
 }
 function shareAsText(){
@@ -2529,9 +2824,11 @@ function saveNewPin(){
   const pin = document.getElementById("newPinInput").value.trim();
   if(!/^\d{4}$/.test(pin)){ toast("PIN ต้องเป็นตัวเลข 4 หลัก"); return; }
   currentProfile.pin = pin;
+  currentProfile.updatedAt = Date.now();
   const idx = profiles.findIndex(p => p.id === currentProfile.id);
   profiles[idx] = currentProfile;
   saveProfiles();
+  deviceSync();
   closePinModal();
   toast("เปลี่ยน PIN แล้ว");
 }
@@ -2748,13 +3045,14 @@ function confirmClearData(){
 }
 
 /* ---------- INIT ---------- */
-document.addEventListener("visibilitychange", () => { if(document.visibilityState === "visible" && currentProfile) syncNow(); });
+document.addEventListener("visibilitychange", () => { if(document.visibilityState !== "visible") return; if(getDeviceLink()) deviceSync(); else if(currentProfile) syncNow(); });
 window.addEventListener("online", () => { if(currentProfile) syncNow(); });
 window.onload = () => {
   fillCurrencyOptions(document.getElementById("newProfileCurrency"));
   initUi();
   loadProfiles();
   renderProfileList();
+  deviceSync();
 };
 </script>
 </body>
