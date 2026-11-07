@@ -427,6 +427,11 @@
   .receipt .r-row .l b{font-weight:600;}
   .receipt .r-row .l small{display:block; color:#8A97A0; font-size:12px; margin-top:1px;}
   .receipt .r-row .r{font-family:'Fraunces',serif; font-weight:600; white-space:nowrap;}
+  #shareModal{z-index:70;}
+  .receipt .r-row .st{display:block; font-size:12.5px; font-weight:700; margin-top:2px;}
+  .receipt .r-row .st.pay{color:#E4572E;}
+  .receipt .r-row .st.back{color:#2FAE66;}
+  .receipt .r-note{padding:10px 24px 0; font-size:12px; color:#8A97A0;}
   .receipt .r-foot{text-align:center; font-size:11px; color:#8A97A0; margin-top:14px;}
   .sync-chip{display:inline-flex; align-items:center; gap:5px; margin-top:6px; margin-left:6px; font-size:12px; font-weight:600; color:var(--brand-dark); background:var(--brand-light); border:none; border-radius:14px; padding:5px 10px; cursor:pointer; font-family:inherit;}
   .sync-chip.err{background:#FDEAEA; color:var(--danger);}
@@ -833,7 +838,7 @@
       <div class="split-result" id="splitResult"></div>
       <div class="row-gap" style="margin-top:14px;">
         <button class="btn secondary block" onclick="closeSplitModal()">ปิด</button>
-        <button class="btn block" onclick="shareSplit()">📤 แชร์</button>
+        <button class="btn block" onclick="openShareSheet('split')">📤 แชร์</button>
       </div>
     </div>
   </div>
@@ -878,8 +883,8 @@
       <h3>แชร์สรุป</h3>
       <p style="font-size:12.5px; color:var(--muted);">ส่งสรุปของช่วงที่กำลังดูไปยัง LINE หรือแอปอื่น</p>
       <div class="set-group sheet-list">
-        <button class="set-row" onclick="closeShareSheet(); shareAsText();"><span class="set-ic">📝</span><span class="set-lbl">เป็นข้อความ<small>อ่านง่าย มีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
-        <button class="set-row" onclick="closeShareSheet(); shareAsImage();"><span class="set-ic">🖼️</span><span class="set-lbl">เป็นรูปภาพ<small>ใบสรุปมีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="closeShareSheet(); shareMode === 'split' ? shareSplit() : shareAsText();"><span class="set-ic">📝</span><span class="set-lbl">เป็นข้อความ<small id="shareTextSub">อ่านง่าย มีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
+        <button class="set-row" onclick="closeShareSheet(); shareMode === 'split' ? shareSplitImage() : shareAsImage();"><span class="set-ic">🖼️</span><span class="set-lbl">เป็นรูปภาพ<small id="shareImageSub">ใบสรุปมีทุกรายการ โน้ต และผู้จ่าย</small></span><span class="chev">›</span></button>
       </div>
       <button class="btn secondary block" onclick="closeShareSheet()">ยกเลิก</button>
     </div>
@@ -2179,8 +2184,55 @@ setInterval(() => {
 }, 60000);
 
 /* ---------- UI helpers ---------- */
-function openShareSheet(){ document.getElementById("shareModal").classList.add("active"); }
+let shareMode = "summary";
+function openShareSheet(mode){
+  shareMode = mode === "split" ? "split" : "summary";
+  document.querySelector("#shareModal h3").textContent = shareMode === "split" ? "แชร์ยอดหาร" : "แชร์สรุป";
+  document.getElementById("shareTextSub").textContent = shareMode === "split" ? "คนละเท่าไหร่ ใครจ่ายเพิ่ม ใครได้คืน" : "อ่านง่าย มีทุกรายการ โน้ต และผู้จ่าย";
+  document.getElementById("shareImageSub").textContent = shareMode === "split" ? "ใบสรุปยอดหาร ส่งเข้ากลุ่มได้เลย" : "ใบสรุปมีทุกรายการ โน้ต และผู้จ่าย";
+  document.getElementById("shareModal").classList.add("active");
+}
 function closeShareSheet(){ document.getElementById("shareModal").classList.remove("active"); }
+/* ---------- Back button: go back inside the app, never fall out by accident ---------- */
+let backArmedUntil = 0;
+function formIsDirty(){
+  const f = document.getElementById("screen-form");
+  return f.classList.contains("active") && (document.getElementById("formAmount").value || document.getElementById("formNote").value.trim());
+}
+function closeOverlay(o){
+  const closers = { catModal: () => closeCatModal(), payerModal: () => closePayerModal(), tripModal: () => closeTripModal(false),
+                    syncModal: () => closeSyncModal(), deviceModal: () => closeDeviceModal(), splitModal: () => closeSplitModal() };
+  if(closers[o.id]) closers[o.id](); else o.classList.remove("active");
+}
+function handleBack(){
+  const keep = () => history.pushState({ app:"guard" }, "");
+  const open = [...document.querySelectorAll(".modal-overlay.active")];
+  if(open.length){
+    // The share sheet sits on top of the split sheet, so close the topmost one first
+    const top = open.find(o => o.id === "shareModal") || open[open.length - 1];
+    closeOverlay(top); keep(); return;
+  }
+  const active = (document.querySelector(".screen.active") || {}).id;
+  if(active === "screen-form"){
+    if(formIsDirty() && !confirm("ยกเลิกรายการที่กำลังบันทึก? สิ่งที่พิมพ์ไว้จะหายไป")){ keep(); return; }
+    closeForm(); keep(); return;
+  }
+  if(currentProfile && active && active !== "screen-dashboard"){ navTo("screen-dashboard"); keep(); return; }
+  if(!currentProfile && active && active !== "screen-profiles"){ showScreen("screen-profiles"); keep(); return; }
+  if(Date.now() < backArmedUntil){ history.back(); return; }
+  backArmedUntil = Date.now() + 2000;
+  toast("กดย้อนกลับอีกครั้งเพื่อออกจากแอป");
+  keep();
+}
+function initBackGuard(){
+  try{
+    history.replaceState({ app:"base" }, "");
+    history.pushState({ app:"guard" }, "");
+    window.addEventListener("popstate", handleBack);
+  }catch(e){}
+  // Closing or reloading the tab while typing a new entry
+  window.addEventListener("beforeunload", e => { if(formIsDirty()){ e.preventDefault(); e.returnValue = ""; } });
+}
 function initUi(){
   // Remember which collapsible sections the person keeps open
   document.querySelectorAll("details[data-fold]").forEach(d => {
@@ -2286,6 +2338,11 @@ function deletePayer(i){
 }
 
 /* ---------- SPLIT BILL ---------- */
+function describeItems(items){
+  const counts = new Map();
+  items.forEach(t => { const k = t.note || t.category; counts.set(k, (counts.get(k) || 0) + 1); });
+  return [...counts].map(([k,n]) => n > 1 ? `${k} ×${n}` : k).join(", ");
+}
 let splitCount = 4;
 function splitTx(){
   // Split uses expenses in the period currently shown on the stats screen.
@@ -2349,7 +2406,7 @@ function renderSplit(){
     h += `<h4>คนที่ออกเงินไปแล้ว</h4>`;
     r.payers.forEach(p => {
       const st = payerStatus(p);
-      const what = p.items.map(t => t.note || t.category).join(", ");
+      const what = describeItems(p.items);
       h += `<div>• <b>${escapeHtml(p.name)}</b> จ่ายไปแล้ว ${fmtMoney(p.paid)} <span style="color:var(--muted);">(${escapeHtml(what)})</span><br>&nbsp;&nbsp;→ <span style="color:${st.color}; font-weight:600;">${st.text}</span></div>`;
     });
   }
@@ -2372,7 +2429,7 @@ function buildSplitText(){
     lines.push("");
     lines.push("คนที่ออกเงินไปแล้ว");
     r.payers.forEach(p => {
-      const what = p.items.map(t => t.note || t.category).join(", ");
+      const what = describeItems(p.items);
       lines.push(`• ${p.name} จ่ายไปแล้ว ${fmtMoney(p.paid)} (${what}) → ${payerStatus(p).text}`);
     });
   }
@@ -2736,12 +2793,11 @@ function buildReceiptEl(){
   el.innerHTML = h;
   return el;
 }
-function shareAsImage(){
+function shareCardImage(card, filename){
   if(typeof html2canvas === "undefined"){
     toast("กำลังโหลดตัวช่วยสร้างรูปภาพ กรุณาลองใหม่อีกครั้งในสักครู่");
     return;
   }
-  const card = buildReceiptEl();
   const wrapper = document.createElement("div");
   wrapper.style.cssText = "position:fixed; top:-10000px; left:0; width:420px; background:#fff;";
   wrapper.appendChild(card);
@@ -2751,13 +2807,13 @@ function shareAsImage(){
     document.body.removeChild(wrapper);
     canvas.toBlob(blob => {
       if(!blob){ toast("สร้างรูปภาพไม่สำเร็จ"); return; }
-      const file = new File([blob], "expense-summary.png", {type:"image/png"});
+      const file = new File([blob], filename, {type:"image/png"});
       if(navigator.canShare && navigator.canShare({files:[file]})){
         navigator.share({ files:[file] }).catch(()=>{});
       } else {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "expense-summary.png";
+        a.href = url; a.download = filename;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 1000);
         toast("เบราว์เซอร์นี้ยังไม่รองรับการแชร์ไฟล์ ดาวน์โหลดรูปภาพให้แล้วแทน");
@@ -2767,6 +2823,41 @@ function shareAsImage(){
     if(wrapper.parentNode) document.body.removeChild(wrapper);
     toast("สร้างรูปภาพไม่สำเร็จ ลองอีกครั้ง");
   });
+}
+function shareAsImage(){ shareCardImage(buildReceiptEl(), "expense-summary.png"); }
+function buildSplitReceiptEl(){
+  const r = computeSplit();
+  const el = document.createElement("div");
+  el.className = "receipt";
+  let h = `<div class="r-head">
+      <div class="r-title">🧮 หารค่าใช้จ่าย</div>
+      <div class="r-period">🗓 ${escapeHtml(r.period)}</div>
+      <div class="r-total">${fmtMoney(r.total)}</div>
+      <div class="r-count">หาร ${r.count} คน = คนละ ${fmtMoney(r.share)}</div>
+    </div>`;
+  if(r.payers.length){
+    h += `<div class="r-sec">คนที่ออกเงินไปแล้ว</div>`;
+    r.payers.forEach(p => {
+      const st = p.diff > 0.005 ? `<span class="st pay">จ่ายเพิ่ม ${fmtMoney(p.diff)}</span>`
+              : p.diff < -0.005 ? `<span class="st back">ได้คืน ${fmtMoney(-p.diff)}</span>`
+              : `<span class="st">จ่ายพอดีแล้ว</span>`;
+      h += `<div class="r-row"><div class="l"><b>👤 ${escapeHtml(p.name)}</b><small>${escapeHtml(describeItems(p.items))}</small></div><div class="r">${fmtMoney(p.paid)}${st}</div></div>`;
+    });
+  }
+  if(r.unpaid.length){
+    h += `<div class="r-sec">ยังไม่ได้ออกเงิน</div>`;
+    r.unpaid.forEach(p => { h += `<div class="r-row"><div class="l"><b>👤 ${escapeHtml(p.name)}</b></div><div class="r"><span class="st pay">จ่าย ${fmtMoney(r.share)}</span></div></div>`; });
+  }
+  if(r.others) h += `<div class="r-row"><div class="l">คนอื่นอีก ${r.others} คน</div><div class="r"><span class="st pay">คนละ ${fmtMoney(r.share)}</span></div></div>`;
+  if(r.remainder) h += `<div class="r-note">* หารไม่ลงตัว มีเศษ ${fmtMoney(Math.abs(r.remainder))}</div>`;
+  if(r.unassigned) h += `<div class="r-note">* รวมรายจ่ายที่ไม่ระบุผู้จ่าย ${fmtMoney(r.unassigned)} ไว้ในยอดหารแล้ว</div>`;
+  h += `<div class="r-foot">Chatawut Touchpi Expense Tracker</div>`;
+  el.innerHTML = h;
+  return el;
+}
+function shareSplitImage(){
+  if(!computeSplit().total){ toast("ยังไม่มียอดให้หาร"); return; }
+  shareCardImage(buildSplitReceiptEl(), "split-bill.png");
 }
 
 /* ---------- CATEGORY MANAGEMENT ---------- */
@@ -3050,6 +3141,7 @@ window.addEventListener("online", () => { if(currentProfile) syncNow(); });
 window.onload = () => {
   fillCurrencyOptions(document.getElementById("newProfileCurrency"));
   initUi();
+  initBackGuard();
   loadProfiles();
   renderProfileList();
   deviceSync();
