@@ -2204,11 +2204,22 @@ function openShareSheet(mode){
 }
 function closeShareSheet(){ document.getElementById("shareModal").classList.remove("active"); }
 /* ---------- Back button / swipe back: stay inside the app, ask before leaving ---------- */
-// Browsers ignore history entries added without a tap, so the guard is (re)armed on every real touch or key press.
+// Safari and Chrome skip history entries added without a tap, so every guard entry made outside a tap
+// is replaced by a fresh one on the next real touch, click or key press. Each entry carries its depth (n)
+// so "leave" knows exactly how far back the page started.
 let guardOn = false, leaving = false;
-function armGuard(){
-  if(guardOn || leaving) return;
-  try{ history.pushState({ app:"guard" }, ""); guardOn = true; }catch(e){}
+function guardDepth(){ const st = history.state; return (st && st.app && typeof st.n === "number") ? st.n : 0; }
+function pushGuard(trusted){
+  try{ history.pushState({ app:"guard", n: guardDepth() + 1, t: !!trusted }, ""); guardOn = true; }catch(e){}
+}
+function armGuard(ev){
+  if(leaving) return;
+  const st = history.state || {};
+  const onGuard = guardDepth() > 0;
+  const trusted = !!(ev && ev.isTrusted);
+  if(!onGuard) pushGuard(trusted);
+  else if(trusted && !st.t) pushGuard(true);   // upgrade an untrusted guard during a real tap
+  guardOn = true;
 }
 function formIsDirty(){
   const f = document.getElementById("screen-form");
@@ -2220,7 +2231,7 @@ function closeOverlay(o){
   if(closers[o.id]) closers[o.id](); else o.classList.remove("active");
 }
 function handleBack(){
-  guardOn = false;
+  guardOn = guardDepth() > 0;
   if(leaving) return;
   const open = [...document.querySelectorAll(".modal-overlay.active")];
   if(open.length){
@@ -2245,18 +2256,18 @@ function leaveApp(){
   document.getElementById("exitModal").classList.remove("active");
   leaving = true;
   const before = location.href;
-  history.go(guardOn ? -2 : -1);
+  history.go(-(guardDepth() + 1));
   // Nothing to go back to (app opened in a fresh tab or from the home screen)
   setTimeout(() => {
     if(location.href === before && document.visibilityState === "visible"){
-      leaving = false; guardOn = false; armGuard();
+      leaving = false; armGuard();
       toast("ปิดแท็บหรือปัดแอปทิ้งเพื่อออกได้เลย ข้อมูลบันทึกไว้แล้ว");
     }
   }, 700);
 }
 function initBackGuard(){
   try{
-    history.replaceState({ app:"base" }, "");
+    if(guardDepth() === 0) history.replaceState({ app:"base", n:0 }, "");
     armGuard();
     window.addEventListener("popstate", handleBack);
     ["pointerdown","touchstart","keydown"].forEach(t => window.addEventListener(t, armGuard, { capture:true, passive:true }));
