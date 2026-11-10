@@ -891,6 +891,16 @@
   </div>
 
   <!-- Modal: custom date range -->
+  <div class="modal-overlay" id="exitModal">
+    <div class="modal-sheet">
+      <h3>ออกจากแอป?</h3>
+      <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px;">ข้อมูลทั้งหมดบันทึกไว้แล้ว ไม่หาย</p>
+      <div class="row-gap">
+        <button class="btn secondary block" onclick="leaveApp()">ออก</button>
+        <button class="btn block" onclick="stayInApp()">อยู่ต่อ</button>
+      </div>
+    </div>
+  </div>
   <div class="modal-overlay" id="rangeModal">
     <div class="modal-sheet">
       <h3>เลือกช่วงเวลา</h3>
@@ -2193,8 +2203,13 @@ function openShareSheet(mode){
   document.getElementById("shareModal").classList.add("active");
 }
 function closeShareSheet(){ document.getElementById("shareModal").classList.remove("active"); }
-/* ---------- Back button: go back inside the app, never fall out by accident ---------- */
-let backArmedUntil = 0;
+/* ---------- Back button / swipe back: stay inside the app, ask before leaving ---------- */
+// Browsers ignore history entries added without a tap, so the guard is (re)armed on every real touch or key press.
+let guardOn = false, leaving = false;
+function armGuard(){
+  if(guardOn || leaving) return;
+  try{ history.pushState({ app:"guard" }, ""); guardOn = true; }catch(e){}
+}
 function formIsDirty(){
   const f = document.getElementById("screen-form");
   return f.classList.contains("active") && (document.getElementById("formAmount").value || document.getElementById("formNote").value.trim());
@@ -2205,33 +2220,49 @@ function closeOverlay(o){
   if(closers[o.id]) closers[o.id](); else o.classList.remove("active");
 }
 function handleBack(){
-  const keep = () => history.pushState({ app:"guard" }, "");
+  guardOn = false;
+  if(leaving) return;
   const open = [...document.querySelectorAll(".modal-overlay.active")];
   if(open.length){
+    const ex = open.find(o => o.id === "exitModal");
+    if(ex){ ex.classList.remove("active"); armGuard(); return; }   // back again while asking = stay
     // The share sheet sits on top of the split sheet, so close the topmost one first
     const top = open.find(o => o.id === "shareModal") || open[open.length - 1];
-    closeOverlay(top); keep(); return;
+    closeOverlay(top); armGuard(); return;
   }
   const active = (document.querySelector(".screen.active") || {}).id;
   if(active === "screen-form"){
-    if(formIsDirty() && !confirm("ยกเลิกรายการที่กำลังบันทึก? สิ่งที่พิมพ์ไว้จะหายไป")){ keep(); return; }
-    closeForm(); keep(); return;
+    if(formIsDirty() && !confirm("ยกเลิกรายการที่กำลังบันทึก? สิ่งที่พิมพ์ไว้จะหายไป")){ armGuard(); return; }
+    closeForm(); armGuard(); return;
   }
-  if(currentProfile && active && active !== "screen-dashboard"){ navTo("screen-dashboard"); keep(); return; }
-  if(!currentProfile && active && active !== "screen-profiles"){ showScreen("screen-profiles"); keep(); return; }
-  if(Date.now() < backArmedUntil){ history.back(); return; }
-  backArmedUntil = Date.now() + 2000;
-  toast("กดย้อนกลับอีกครั้งเพื่อออกจากแอป");
-  keep();
+  if(currentProfile && active && active !== "screen-dashboard"){ navTo("screen-dashboard"); armGuard(); return; }
+  if(!currentProfile && active && active !== "screen-profiles"){ showScreen("screen-profiles"); armGuard(); return; }
+  armGuard();
+  document.getElementById("exitModal").classList.add("active");
+}
+function stayInApp(){ document.getElementById("exitModal").classList.remove("active"); armGuard(); }
+function leaveApp(){
+  document.getElementById("exitModal").classList.remove("active");
+  leaving = true;
+  const before = location.href;
+  history.go(guardOn ? -2 : -1);
+  // Nothing to go back to (app opened in a fresh tab or from the home screen)
+  setTimeout(() => {
+    if(location.href === before && document.visibilityState === "visible"){
+      leaving = false; guardOn = false; armGuard();
+      toast("ปิดแท็บหรือปัดแอปทิ้งเพื่อออกได้เลย ข้อมูลบันทึกไว้แล้ว");
+    }
+  }, 700);
 }
 function initBackGuard(){
   try{
     history.replaceState({ app:"base" }, "");
-    history.pushState({ app:"guard" }, "");
+    armGuard();
     window.addEventListener("popstate", handleBack);
+    ["pointerdown","touchstart","keydown"].forEach(t => window.addEventListener(t, armGuard, { capture:true, passive:true }));
   }catch(e){}
-  // Closing or reloading the tab while typing a new entry
-  window.addEventListener("beforeunload", e => { if(formIsDirty()){ e.preventDefault(); e.returnValue = ""; } });
+  // Last line of defence: if the browser skips the guard, ask with the browser's own "leave this page?" dialog
+  window.addEventListener("beforeunload", e => { if(!leaving && (currentProfile || formIsDirty())){ e.preventDefault(); e.returnValue = ""; } });
 }
 function initUi(){
   // Remember which collapsible sections the person keeps open
